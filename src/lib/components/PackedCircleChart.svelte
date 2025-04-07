@@ -312,15 +312,31 @@
             }
         }, 0);
         
+        // Debounce timer for resize
+        let resizeTimer: number | null = null;
+        
         const handleResize = () => {
-            width = window.innerWidth;
-            height = window.innerHeight;
-            updateChart();
+            // Clear previous timer
+            if (resizeTimer) {
+                clearTimeout(resizeTimer);
+            }
+            
+            // Set new timer to execute only after 100ms of resize inactivity
+            resizeTimer = window.setTimeout(() => {
+                console.log("Handling resize:", window.innerWidth, "x", window.innerHeight);
+                width = window.innerWidth;
+                height = window.innerHeight;
+                updateChart();
+                resizeTimer = null;
+            }, 100);
         };
         
         window.addEventListener('resize', handleResize);
         return () => {
             window.removeEventListener('resize', handleResize);
+            if (resizeTimer) {
+                clearTimeout(resizeTimer);
+            }
             if (svg) {
                 svg.removeEventListener('reset-zoom', resetView);
                 svg.removeEventListener('zoom-out', zoomOutView);
@@ -333,54 +349,60 @@
         
         console.log("Updating chart with width:", width, "height:", height);
         
-        // Store current selection and transform if possible
+        // Store current selection
         let currentSelection = selectedDot;
-        let currentTransform = null;
+        
         try {
-            if (svg) {
-                currentTransform = d3.zoomTransform(svg);
+            // Force complete re-creation by setting zoom to null
+            // This ensures we properly reinitialize all zoom behavior
+            zoom = null;
+            
+            // Force re-creation of container element to ensure proper DOM references
+            const svgSelection = d3.select(svg);
+            svgSelection.selectAll('*').remove();
+            svgSelection.on('.zoom', null); // Remove all zoom listeners
+            
+            // Create a new container group
+            const newContainer = svgSelection.append('g');
+            container = newContainer.node();
+            
+            // Render with new dimensions
+            renderChart();
+            
+            // Restore selection
+            selectedDot = currentSelection;
+            
+            // Update visuals based on current state
+            if (highlightFatalities !== null || highlightNumberRange !== null) {
+                updateHighlighting();
             }
+            
+            if (selectedDot) {
+                updateDotSelection();
+            }
+            
+            // Update visible counts after everything is rendered
+            updateVisibleCounts();
+            
+            console.log("Chart updated successfully");
         } catch (e) {
-            console.error("Error getting current transform:", e);
-        }
-        
-        // Force re-creation of container element to ensure proper DOM references
-        const svgSelection = d3.select(svg);
-        svgSelection.selectAll('*').remove();
-        
-        // Create a new container group instead of just cleaning the old one
-        const newContainer = svgSelection.append('g');
-        container = newContainer.node();
-        
-        // Render with new dimensions
-        renderChart();
-        
-        // Restore selection and transform if applicable
-        selectedDot = currentSelection;
-        
-        if (currentTransform && zoom) {
+            console.error("Error updating chart:", e);
+            // Try a basic recovery
             try {
-                svgSelection
-                    .call(zoom.transform as any, currentTransform);
-            } catch (e) {
-                console.error("Error restoring transform:", e);
-                // If error, apply a default transform
-                resetView();
+                renderChart();
+            } catch (recoveryError) {
+                console.error("Failed to recover after resize error:", recoveryError);
             }
-        }
-        
-        // Update visuals based on current state
-        if (highlightFatalities !== null || highlightNumberRange !== null) {
-            updateHighlighting();
-        }
-        
-        if (selectedDot) {
-            updateDotSelection();
         }
     }
     
     function renderChart() {
-        if (!svg || !dots || !dots.length) return;
+        if (!svg || !dots || !dots.length) {
+            console.log("Cannot render chart: missing svg, dots, or empty dots array");
+            return;
+        }
+
+        console.log("Rendering chart with", dots.length, "dots at", width, "x", height);
 
         const svgSelection = d3.select(svg);
         const containerSelection = d3.select(container);
@@ -396,99 +418,108 @@
             }))
         };
 
-        // Create pack layout with viewport size
-        const pack = d3.pack()
-            .size([width, height])
-            .padding(5)
-            .radius((d: any) => {
-                if (d.data.numberInvolved === 1) return 6;
-                if (d.data.numberInvolved >= 2 && d.data.numberInvolved <= 5) return 12;
-                return 24;
+        try {
+            // Create pack layout with viewport size
+            const pack = d3.pack()
+                .size([width, height])
+                .padding(5)
+                .radius((d: any) => {
+                    if (d.data.numberInvolved === 1) return 6;
+                    if (d.data.numberInvolved >= 2 && d.data.numberInvolved <= 5) return 12;
+                    return 24;
+                });
+
+            const root = d3.hierarchy(hierarchyData)
+                .sum((d: any) => d.value);
+
+            const packedData = pack(root);
+
+            // Calculate bounds
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            packedData.leaves().forEach((d: any) => {
+                minX = Math.min(minX, d.x - d.r);
+                maxX = Math.max(maxX, d.x + d.r);
+                minY = Math.min(minY, d.y - d.r);
+                maxY = Math.max(maxY, d.y + d.r);
             });
 
-        const root = d3.hierarchy(hierarchyData)
-            .sum((d: any) => d.value);
+            // Calculate center offset
+            centerOffsetX = -(minX + maxX) / 2;
+            centerOffsetY = -(minY + maxY) / 2;
 
-        const packedData = pack(root);
-
-        // Calculate bounds
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        packedData.leaves().forEach((d: any) => {
-            minX = Math.min(minX, d.x - d.r);
-            maxX = Math.max(maxX, d.x + d.r);
-            minY = Math.min(minY, d.y - d.r);
-            maxY = Math.max(maxY, d.y + d.r);
-        });
-
-        // Calculate center offset
-        centerOffsetX = -(minX + maxX) / 2;
-        centerOffsetY = -(minY + maxY) / 2;
-
-        // Create circles with centered coordinates
-        containerSelection.selectAll('circle')
-            .data(packedData.leaves())
-            .enter()
-            .append('circle')
-            .attr('r', (d: PackedDot) => d.r)
-            .attr('cx', (d: PackedDot) => d.x + centerOffsetX)
-            .attr('cy', (d: PackedDot) => d.y + centerOffsetY)
-            .attr('fill', (d: PackedDot) => d.data.fatalities ? '#FFFFFF' : '#D9D9D9')
-            .attr('stroke', (d: PackedDot) => {
-                if (interactive) {
-                    return d.data === selectedDot ? '#333333' : '#a8a8a8';
-                } else {
-                    return d.data === selectedDot ? '#000000' : '#D9D9D9';
+            // Create circles with centered coordinates
+            containerSelection.selectAll('circle')
+                .data(packedData.leaves())
+                .enter()
+                .append('circle')
+                .attr('r', (d: PackedDot) => d.r)
+                .attr('cx', (d: PackedDot) => d.x + centerOffsetX)
+                .attr('cy', (d: PackedDot) => d.y + centerOffsetY)
+                .attr('fill', (d: PackedDot) => d.data.fatalities ? '#FFFFFF' : '#D9D9D9')
+                .attr('stroke', (d: PackedDot) => {
+                    if (interactive) {
+                        return d.data === selectedDot ? '#333333' : '#a8a8a8';
+                    } else {
+                        return d.data === selectedDot ? '#000000' : '#D9D9D9';
+                    }
+                })
+                .attr('stroke-width', (d: PackedDot) => d.data === selectedDot ? 1.5 : 0.5)
+                .style('cursor', interactive ? 'pointer' : 'default');
+            
+            // Add interactivity if in interactive mode
+            if (interactive) {
+                const circles = containerSelection.selectAll('circle');
+                
+                // Always add click events
+                circles.on('click', (event: MouseEvent, d: PackedDot) => handleDotClick(event, d.data));
+                
+                // Only add hover events on non-mobile devices
+                if (!isMobile) {
+                    circles
+                        .on('mouseenter', (event: MouseEvent, d: PackedDot) => handleMouseEnter(event, d.data))
+                        .on('mouseleave', handleMouseLeave);
                 }
-            })
-            .attr('stroke-width', (d: PackedDot) => d.data === selectedDot ? 1.5 : 0.5)
-            .style('cursor', interactive ? 'pointer' : 'default');
-        
-        // Add interactivity if in interactive mode
-        if (interactive) {
-            const circles = containerSelection.selectAll('circle');
-            
-            // Always add click events
-            circles.on('click', (event: MouseEvent, d: PackedDot) => handleDotClick(event, d.data));
-            
-            // Only add hover events on non-mobile devices
-            if (!isMobile) {
-                circles
-                    .on('mouseenter', (event: MouseEvent, d: PackedDot) => handleMouseEnter(event, d.data))
-                    .on('mouseleave', handleMouseLeave);
             }
-        }
 
-        // Initialize zoom behavior if not already initialized
-        if (!zoom) {
-            zoom = d3.zoom()
-                .scaleExtent([0.1, 8])
-                .on('zoom', (event: any) => {
-                    containerSelection.attr('transform', event.transform);
-                    updateVisibleCounts();
-                });
-            
-            // Only apply zoom in interactive mode
-            if (interactive) {
-                svgSelection.call(zoom as any);
+            // Initialize zoom behavior - always create a new one to avoid issues with references
+            try {
+                // First remove any existing zoom behaviors
+                svgSelection.on('.zoom', null);
+                
+                zoom = d3.zoom()
+                    .scaleExtent([0.1, 8])
+                    .on('zoom', (event: any) => {
+                        containerSelection.attr('transform', event.transform);
+                        updateVisibleCounts();
+                    });
+                
+                // Only apply zoom in interactive mode
+                if (interactive) {
+                    svgSelection.call(zoom as any);
+                }
+                
+                // Set initial transform
+                const initialTransform = d3.zoomIdentity
+                    .translate(width/2, height/2)
+                    .scale(interactive ? 0.6 : 1.5);
+                
+                svgSelection.call(zoom.transform as any, initialTransform);
+                
+                console.log("Zoom behavior initialized");
+            } catch (e) {
+                console.error("Error initializing zoom:", e);
+            }
+
+            updateVisibleCounts();
+
+            // Apply any active highlighting
+            if (highlightFatalities !== null || highlightNumberRange !== null) {
+                updateHighlighting();
             }
             
-            // Set initial transform
-            const initialTransform = d3.zoomIdentity
-                .translate(width/2, height/2)
-                .scale(interactive ? 0.6 : 1.5);
-            svgSelection.call(zoom.transform as any, initialTransform);
-        } else {
-            // Re-bind zoom if it already exists
-            if (interactive) {
-                svgSelection.call(zoom as any);
-            }
-        }
-
-        updateVisibleCounts();
-
-        // Apply any active highlighting
-        if (highlightFatalities !== null || highlightNumberRange !== null) {
-            updateHighlighting();
+            console.log("Chart rendered successfully");
+        } catch (e) {
+            console.error("Error in renderChart:", e);
         }
     }
 
@@ -676,36 +707,70 @@
     }
 
     function resetView() {
-        if (!svg || !zoom) return;
+        if (!svg || !zoom) {
+            console.error("Cannot reset view: missing svg or zoom");
+            return;
+        }
         
-        // Create a transform that centers the view and sets a consistent zoom level
-        const initialTransform = d3.zoomIdentity
-            .translate(width/2, height/2)
-            .scale(2);
+        try {
+            console.log("Resetting view");
             
-        // Apply transform with animation
-        d3.select(svg)
-            .transition()
-            .duration(750)
-            .call(zoom.transform as any, initialTransform);
+            // Create a transform that centers the view and sets a consistent zoom level
+            const initialTransform = d3.zoomIdentity
+                .translate(width/2, height/2)
+                .scale(2);
+                
+            // Apply transform with animation
+            d3.select(svg)
+                .transition()
+                .duration(750)
+                .call(zoom.transform as any, initialTransform);
+                
+            // Clear any selection
+            selectedDot = null;
             
-        // Clear any selection
-        selectedDot = null;
+            console.log("View reset complete");
+        } catch (e) {
+            console.error("Error in resetView:", e);
+            // Try to recover by re-rendering
+            try {
+                renderChart();
+            } catch (recoveryError) {
+                console.error("Failed to recover from resetView error:", recoveryError);
+            }
+        }
     }
     
     function zoomOutView() {
-        if (!svg || !zoom) return;
+        if (!svg || !zoom) {
+            console.error("Cannot zoom out: missing svg or zoom");
+            return;
+        }
         
-        // Create a transform that zooms out to get a broader view
-        const zoomOutTransform = d3.zoomIdentity
-            .translate(width/2, height/2)
-            .scale(0.6);
+        try {
+            console.log("Zooming out view");
             
-        // Apply transform with animation
-        d3.select(svg)
-            .transition()
-            .duration(1000) // Slightly longer for the exploration entry animation
-            .call(zoom.transform as any, zoomOutTransform);
+            // Create a transform that zooms out to get a broader view
+            const zoomOutTransform = d3.zoomIdentity
+                .translate(width/2, height/2)
+                .scale(0.6);
+                
+            // Apply transform with animation
+            d3.select(svg)
+                .transition()
+                .duration(1000) // Slightly longer for the exploration entry animation
+                .call(zoom.transform as any, zoomOutTransform);
+                
+            console.log("Zoom out complete");
+        } catch (e) {
+            console.error("Error in zoomOutView:", e);
+            // Try to recover by re-rendering
+            try {
+                renderChart();
+            } catch (recoveryError) {
+                console.error("Failed to recover from zoomOutView error:", recoveryError);
+            }
+        }
     }
 </script>
 
