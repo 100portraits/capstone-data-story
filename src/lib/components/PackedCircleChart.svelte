@@ -809,8 +809,11 @@
             <p class="md:text-sm text-xs mb-1">Currently visible:</p>
             <p class="md:font-medium font-bold md:text-lg text-base mb-1">{visibleCasualties} casualties</p>
             <div class="border-t border-gray-300 pt-1 mt-1">
-                <p class="md:text-xs text-2xs text-gray-600">That's how many people will be injured in global road traffic in the next</p>
-                <p class="md:font-medium font-medium md:text-sm  text-gray-800">{getTimeForCasualties(visibleCasualties)}</p>
+                <p class="md:text-xs text-2xs text-gray-600">That's how many people will be injured in global road traffic in the next: </p>
+                <div class="flex justify-between mt-1">
+                    <p class="md:font-medium font-medium md:text-sm text-xl  text-gray-800">{getTimeForCasualties(visibleCasualties)}</p>
+                    <p><a href="https://www.who.int/news-room/fact-sheets/detail/road-traffic-injuries" target="_blank" class="text-gray-600 underline">Source</a></p>
+                </div>
             </div>
         </div>
     </div>
