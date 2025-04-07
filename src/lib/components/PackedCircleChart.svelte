@@ -315,15 +315,26 @@
     export function updateChart() {
         if (!svg) return;
         
+        console.log("Updating chart with width:", width, "height:", height);
+        
         // Store current selection and transform if possible
         let currentSelection = selectedDot;
         let currentTransform = null;
-        if (svg) {
-            currentTransform = d3.zoomTransform(svg);
+        try {
+            if (svg) {
+                currentTransform = d3.zoomTransform(svg);
+            }
+        } catch (e) {
+            console.error("Error getting current transform:", e);
         }
         
-        // Clean up
-        d3.select(svg).selectAll('*').remove();
+        // Force re-creation of container element to ensure proper DOM references
+        const svgSelection = d3.select(svg);
+        svgSelection.selectAll('*').remove();
+        
+        // Create a new container group instead of just cleaning the old one
+        const newContainer = svgSelection.append('g');
+        container = newContainer.node();
         
         // Render with new dimensions
         renderChart();
@@ -332,8 +343,14 @@
         selectedDot = currentSelection;
         
         if (currentTransform && zoom) {
-            d3.select(svg)
-                .call(zoom.transform as any, currentTransform);
+            try {
+                svgSelection
+                    .call(zoom.transform as any, currentTransform);
+            } catch (e) {
+                console.error("Error restoring transform:", e);
+                // If error, apply a default transform
+                resetView();
+            }
         }
         
         // Update visuals based on current state
@@ -669,6 +686,59 @@
     }
 </script>
 
+<style>
+    @media (max-width: 768px) {
+        /* Disable hover effects on mobile */
+        .headline-card-3d:hover {
+            transform: none;
+        }
+        
+        .progress-item:hover {
+            background-color: transparent;
+        }
+        
+        button:hover {
+            background-color: inherit !important;
+            transform: none !important;
+        }
+        
+        .hover\:bg-gray-100:hover {
+            background-color: transparent !important;
+        }
+        
+        /* Mobile counter styles */
+        .counter-container {
+            position: fixed;
+            bottom: 8rem;
+            left: 0;
+            right: 0;
+            width: 100%;
+            max-width: 20rem;
+            margin: 0 auto;
+            z-index: 50;
+            background-color: white;
+            border: 1px solid black;
+            border-radius: 0.375rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+    }
+    
+    /* Desktop counter styles */
+    @media (min-width: 769px) {
+        .counter-container {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: auto;
+            z-index: 50;
+            background-color: white;
+            border: 1px solid black;
+            border-radius: 0.375rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+    }
+</style>
+
 <div class="relative w-full h-full {className}">
     <!-- Tooltip -->
     {#if hoveredDot && interactive}
@@ -681,7 +751,7 @@
     {/if}
 
     <!-- Counter -->
-    <div class="counter-container fixed md:absolute md:top-4 md:right-4 bottom-16 right-0 left-0 mx-auto md:mx-0 md:w-auto w-full max-w-xs bg-white border border-black rounded-md shadow-lg" style="display: none;">
+    <div class="counter-container" style="display: none;">
         <div class="counter-content md:p-4 p-2">
             <p class="md:text-sm text-xs mb-1">Currently visible:</p>
             <p class="md:font-medium font-bold md:text-lg text-base mb-1">{visibleCasualties} casualties</p>
@@ -741,56 +811,56 @@
 
     <!-- Modal for clicked dot in interactive mode -->
     {#if selectedDot && interactive}
-    <div class="absolute top-4 left-4 bg-white border border-black rounded-md px-8 py-6 shadow-lg max-w-xs">
+    <div class="absolute top-4 left-4 bg-white border border-black rounded-md md:px-8 md:py-6 px-4 py-3 shadow-lg max-w-xs">
         <button 
             on:click={clearSelection}
-            class="absolute top-3 right-3 p-1 hover:bg-gray-100 rounded-sm"
+            class="absolute top-2 right-2 p-1 rounded-sm"
             aria-label="Close"
         >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M18 6L6 18M6 6l12 12" />
             </svg>
         </button>
         
-        <h3 class="text-2xl mb-4">
+        <h3 class="md:text-2xl text-xl md:mb-4 mb-2">
             {#if isHumanized && humanizedData}
                 {humanizedData.humanizedHeadline}
             {:else}
                 {selectedDot.headline}
             {/if}
         </h3>
-        <p class="text-sm mb-4">
+        <p class="text-sm md:mb-4 mb-2">
             Casualties: {selectedDot.numberInvolved}
         </p>
-        <hr class="border-black mb-4">
-        <h4 class="text-lg mb-2">Criteria</h4>
-        <div class="space-y-3 mb-4">
+        <hr class="border-black md:mb-4 mb-2">
+        <h4 class="md:text-lg text-base md:mb-2 mb-1">Criteria</h4>
+        <div class="space-y-2 md:mb-4 mb-3">
             {#if isHumanized && humanizedData}
                 {#each Object.entries(humanizedData.humanizedCriteria) as [key, { value, description }]}
-                <div class="flex items-center gap-4">
-                    <div class="w-8 h-6 {value ? 'bg-red-500' : 'bg-gray-300'}"></div>
-                    <span class="text-sm">{description}</span>
+                <div class="flex items-center gap-3">
+                    <div class="w-6 h-4 md:w-8 md:h-6 {value ? 'bg-red-500' : 'bg-gray-300'}"></div>
+                    <span class="text-xs md:text-sm">{description}</span>
                 </div>
                 {/each}
             {:else}
                 {#each Object.entries(selectedDot.criteria) as [key, value]}
-                <div class="flex items-center gap-4">
-                    <div class="w-8 h-6 {value ? 'bg-red-500' : 'bg-gray-300'}"></div>
-                    <span class="text-sm {value ? 'text-black' : 'text-gray-500'}">Condition {key.slice(-1)}</span>
+                <div class="flex items-center gap-3">
+                    <div class="w-6 h-4 md:w-8 md:h-6 {value ? 'bg-red-500' : 'bg-gray-300'}"></div>
+                    <span class="text-xs md:text-sm {value ? 'text-black' : 'text-gray-500'}">Condition {key.slice(-1)}</span>
                 </div>
                 {/each}
             {/if}
         </div>
 
         {#if error}
-            <div class="mb-4 p-3 bg-red-50 text-red-700 rounded-md">
-                <p class="text-sm">{error}</p>
+            <div class="mb-3 p-2 bg-red-50 text-red-700 rounded-md">
+                <p class="text-xs md:text-sm">{error}</p>
             </div>
         {/if}
 
         <button 
             on:click={toggleView}
-            class="px-4 py-2 border border-black rounded hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-3 py-1 md:px-4 md:py-2 border border-black rounded disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             disabled={isLoading}
         >
             {#if isLoading}

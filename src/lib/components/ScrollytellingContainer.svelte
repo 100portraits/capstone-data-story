@@ -249,6 +249,17 @@
         background-color: #555;
     }
     
+    @media (max-width: 768px) {
+        .exploration-controls {
+            bottom: 5rem; /* Provide space for the casualties counter below */
+        }
+        
+        .exit-exploration-btn {
+            padding: 0.5rem 1.25rem;
+            font-size: 0.9rem;
+        }
+    }
+    
     .down-arrow-btn {
         position: fixed;
         bottom: 2rem;

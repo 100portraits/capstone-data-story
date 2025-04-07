@@ -63,7 +63,7 @@
     <StoryProgress 
         {sections} 
         {activeSection} 
-        showLabels={true}
+        showLabels={false}
         position="right"
         orientation="vertical"
         className="hidden sm:block" 
