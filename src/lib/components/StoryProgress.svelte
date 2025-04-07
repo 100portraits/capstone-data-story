@@ -5,6 +5,7 @@
     export let orientation: "vertical" | "horizontal" = "vertical";
     export let position: "left" | "right" | "top" | "bottom" = "right";
     export let onSectionClick: ((sectionId: string) => void) | undefined = undefined;
+    export let className: string = "";
     
     function handleSectionClick(sectionId: string) {
         if (onSectionClick) {
@@ -22,7 +23,7 @@
     }
 </script>
 
-<div class="story-progress {position} {orientation}">
+<div class="story-progress {position} {orientation} {className}">
     <nav class="progress-nav">
         <ul>
             {#each sections as section}
@@ -66,9 +67,11 @@
     }
     
     .top {
-        top: 2rem;
+        top: 1rem;
         left: 50%;
         transform: translateX(-50%);
+        width: 90%;
+        max-width: 500px;
     }
     
     .bottom {
@@ -86,7 +89,14 @@
     .horizontal ul {
         display: flex;
         flex-direction: row;
-        gap: 1.5rem;
+        justify-content: center;
+        gap: 1rem;
+        width: 100%;
+    }
+    
+    .horizontal .progress-nav {
+        width: 100%;
+        padding: 8px 4px;
     }
     
     .progress-item {
@@ -130,5 +140,30 @@
         margin-left: 0;
         margin-top: 0.5rem;
         text-align: center;
+        font-size: 0.65rem;
+    }
+    
+    .horizontal.top .progress-nav {
+        border-radius: 16px;
+        background-color: rgba(255, 255, 255, 0.85);
+    }
+    
+    .horizontal.top .progress-dot {
+        width: 10px;
+        height: 10px;
+    }
+    
+    @media (max-width: 640px) {
+        .top {
+            top: 0.5rem;
+        }
+        
+        .horizontal ul {
+            gap: 0.5rem;
+        }
+        
+        .horizontal .progress-nav {
+            padding: 6px 3px;
+        }
     }
 </style> 

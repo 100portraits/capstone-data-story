@@ -63,8 +63,21 @@
     <StoryProgress 
         {sections} 
         {activeSection} 
-        showLabels={true} 
+        showLabels={true}
         position="right"
+        orientation="vertical"
+        className="hidden sm:block" 
+        onSectionClick={handleSectionNav}
+    />
+    
+    <!-- Mobile version: horizontal dots at top -->
+    <StoryProgress 
+        {sections} 
+        {activeSection} 
+        showLabels={false}
+        position="top"
+        orientation="horizontal"
+        className="block sm:hidden"
         onSectionClick={handleSectionNav}
     />
 

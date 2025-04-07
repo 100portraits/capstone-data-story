@@ -681,12 +681,14 @@
     {/if}
 
     <!-- Counter -->
-    <div class="counter-container absolute top-4 right-4 bg-white border border-black rounded-md p-4 shadow-lg" style="display: none;">
-        <p class="text-sm mb-1">Currently visible:</p>
-        <p class="font-medium text-lg mb-2">{visibleCasualties} casualties</p>
-        <div class="border-t border-gray-300 pt-2 mt-1">
-            <p class="text-xs text-gray-600">That's how many people will be injured in global road traffic in the next</p>
-            <p class="font-medium text-sm text-gray-800">{getTimeForCasualties(visibleCasualties)}</p>
+    <div class="counter-container fixed md:absolute md:top-4 md:right-4 bottom-16 right-0 left-0 mx-auto md:mx-0 md:w-auto w-full max-w-xs bg-white border border-black rounded-md shadow-lg" style="display: none;">
+        <div class="counter-content md:p-4 p-2">
+            <p class="md:text-sm text-xs mb-1">Currently visible:</p>
+            <p class="md:font-medium font-bold md:text-lg text-base mb-1">{visibleCasualties} casualties</p>
+            <div class="border-t border-gray-300 pt-1 mt-1">
+                <p class="md:text-xs text-2xs text-gray-600">That's how many people will be injured in global road traffic in the next</p>
+                <p class="md:font-medium font-medium md:text-sm text-xs text-gray-800">{getTimeForCasualties(visibleCasualties)}</p>
+            </div>
         </div>
     </div>
     
