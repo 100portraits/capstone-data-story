@@ -251,7 +251,7 @@
     
     @media (max-width: 768px) {
         .exploration-controls {
-            bottom: 5rem; /* Provide space for the casualties counter below */
+            bottom: 2rem; 
         }
         
         .exit-exploration-btn {

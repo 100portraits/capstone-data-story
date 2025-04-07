@@ -37,6 +37,19 @@
     let hoveredDot: { dot: Dot, x: number, y: number } | null = null;
     let centerOffsetX = 0;
     let centerOffsetY = 0;
+    let isMobile = false;
+    
+    // Check if the device is mobile
+    $: isMobile = width <= 768;
+    
+    // Don't show tooltip on mobile
+    $: if (isMobile && hoveredDot) {
+        hoveredDot = null;
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = null;
+        }
+    }
     
     // Statistics for contextual information
     // Using the more conservative estimate of 20 million injuries per year globally
@@ -256,6 +269,9 @@
     }
 
     function handleMouseEnter(event: MouseEvent, dot: Dot) {
+        // Skip hover handling on mobile
+        if (isMobile) return;
+        
         if (hoverTimeout) clearTimeout(hoverTimeout);
         
         hoverTimeout = window.setTimeout(() => {
@@ -429,10 +445,17 @@
         
         // Add interactivity if in interactive mode
         if (interactive) {
-            containerSelection.selectAll('circle')
-                .on('click', (event: MouseEvent, d: PackedDot) => handleDotClick(event, d.data))
-                .on('mouseenter', (event: MouseEvent, d: PackedDot) => handleMouseEnter(event, d.data))
-                .on('mouseleave', handleMouseLeave);
+            const circles = containerSelection.selectAll('circle');
+            
+            // Always add click events
+            circles.on('click', (event: MouseEvent, d: PackedDot) => handleDotClick(event, d.data));
+            
+            // Only add hover events on non-mobile devices
+            if (!isMobile) {
+                circles
+                    .on('mouseenter', (event: MouseEvent, d: PackedDot) => handleMouseEnter(event, d.data))
+                    .on('mouseleave', handleMouseLeave);
+            }
         }
 
         // Initialize zoom behavior if not already initialized
@@ -709,17 +732,47 @@
         /* Mobile counter styles */
         .counter-container {
             position: fixed;
-            bottom: 8rem;
+            bottom: 5rem;
             left: 0;
             right: 0;
             width: 100%;
-            max-width: 20rem;
+            max-width: 22rem;
             margin: 0 auto;
             z-index: 50;
             background-color: white;
             border: 1px solid black;
             border-radius: 0.375rem;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        /* Position Reset View button at top-right on mobile */
+        .reset-view-btn {
+            left: auto !important;
+            right: 1rem !important;
+        }
+        
+        /* Move legend to top-left on mobile */
+        .legend-container {
+            top: 1rem !important;
+            padding: 0.5rem !important;
+            max-width: 16rem !important;
+        }
+        
+        /* Make legend text smaller on mobile */
+        .legend-container h3 {
+            font-size: 0.9rem !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        .legend-container p {
+            font-size: 0.75rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        /* Reduce spacing between legend items */
+        .legend-container .flex {
+            gap: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
         }
     }
     
@@ -741,7 +794,7 @@
 
 <div class="relative w-full h-full {className}">
     <!-- Tooltip -->
-    {#if hoveredDot && interactive}
+    {#if hoveredDot && interactive && !isMobile}
     <div 
         class="fixed z-50 bg-white/70 border border-black px-3 py-2 max-w-xs pointer-events-none"
         style="left: {hoveredDot.x}px; top: {Math.max(0, hoveredDot.y - 8)}px; transform: translate(-50%, -100%);"
@@ -757,7 +810,7 @@
             <p class="md:font-medium font-bold md:text-lg text-base mb-1">{visibleCasualties} casualties</p>
             <div class="border-t border-gray-300 pt-1 mt-1">
                 <p class="md:text-xs text-2xs text-gray-600">That's how many people will be injured in global road traffic in the next</p>
-                <p class="md:font-medium font-medium md:text-sm text-xs text-gray-800">{getTimeForCasualties(visibleCasualties)}</p>
+                <p class="md:font-medium font-medium md:text-sm  text-gray-800">{getTimeForCasualties(visibleCasualties)}</p>
             </div>
         </div>
     </div>
@@ -783,7 +836,7 @@
 
     <!-- Legend in interactive mode -->
     {#if interactive && !selectedDot}
-    <div class="absolute top-20 left-4 bg-white border border-black rounded-md p-4 shadow-lg max-w-xs">
+    <div class="legend-container absolute top-20 left-4 bg-white border border-black rounded-md p-4 shadow-lg max-w-xs">
         <h3 class="font-medium mb-2">Legend</h3>
         <p class="text-sm mb-4">Injuries or deaths reported</p>
         
@@ -811,7 +864,7 @@
 
     <!-- Modal for clicked dot in interactive mode -->
     {#if selectedDot && interactive}
-    <div class="absolute top-4 left-4 bg-white border border-black rounded-md md:px-8 md:py-6 px-4 py-3 shadow-lg max-w-xs">
+    <div class="absolute top-4 left-4 bg-white border border-black rounded-md md:px-8 md:py-6 px-4 pr-10 py-3 shadow-lg max-w-xs">
         <button 
             on:click={clearSelection}
             class="absolute top-2 right-2 p-1 rounded-sm"
@@ -822,7 +875,7 @@
             </svg>
         </button>
         
-        <h3 class="md:text-2xl text-xl md:mb-4 mb-2">
+        <h3 class="text-2xl  md:mb-4 mb-2">
             {#if isHumanized && humanizedData}
                 {humanizedData.humanizedHeadline}
             {:else}
@@ -833,20 +886,20 @@
             Casualties: {selectedDot.numberInvolved}
         </p>
         <hr class="border-black md:mb-4 mb-2">
-        <h4 class="md:text-lg text-base md:mb-2 mb-1">Criteria</h4>
+        <h4 class="text-lg  md:mb-2 mb-1">Criteria</h4>
         <div class="space-y-2 md:mb-4 mb-3">
             {#if isHumanized && humanizedData}
                 {#each Object.entries(humanizedData.humanizedCriteria) as [key, { value, description }]}
                 <div class="flex items-center gap-3">
                     <div class="w-6 h-4 md:w-8 md:h-6 {value ? 'bg-red-500' : 'bg-gray-300'}"></div>
-                    <span class="text-xs md:text-sm">{description}</span>
+                    <span class="text-sm">{description}</span>
                 </div>
                 {/each}
             {:else}
                 {#each Object.entries(selectedDot.criteria) as [key, value]}
                 <div class="flex items-center gap-3">
                     <div class="w-6 h-4 md:w-8 md:h-6 {value ? 'bg-red-500' : 'bg-gray-300'}"></div>
-                    <span class="text-xs md:text-sm {value ? 'text-black' : 'text-gray-500'}">Condition {key.slice(-1)}</span>
+                    <span class="text-sm {value ? 'text-black' : 'text-gray-500'}">Condition {key.slice(-1)}</span>
                 </div>
                 {/each}
             {/if}
