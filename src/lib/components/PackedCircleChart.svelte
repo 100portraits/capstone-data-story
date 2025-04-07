@@ -18,6 +18,12 @@
     export let onSelectDot: ((dot: Dot) => void) | undefined = undefined;
     export let onHumanized: ((result: any) => void) | undefined = undefined;
     
+    // New highlighting props
+    export let highlightFatalities: boolean | null = null;
+    export let highlightNumberRange: {min: number, max: number} | null = null;
+    export let activeSectionId: string = "";
+    export let interactive: boolean = false;
+    
     let svg: SVGSVGElement;
     let container: SVGGElement;
     let selectedDot: Dot | null = null;
@@ -32,6 +38,144 @@
     let centerOffsetX = 0;
     let centerOffsetY = 0;
     
+    // Statistics for contextual information
+    // Using the more conservative estimate of 20 million injuries per year globally
+    const ANNUAL_GLOBAL_INJURIES = 20000000;
+    const INJURIES_PER_DAY = ANNUAL_GLOBAL_INJURIES / 365;
+    const INJURIES_PER_HOUR = INJURIES_PER_DAY / 24;
+    const INJURIES_PER_MINUTE = INJURIES_PER_HOUR / 60;
+    const INJURIES_PER_SECOND = INJURIES_PER_MINUTE / 60;
+    
+    // Calculate time interval for the visible casualties
+    function getTimeForCasualties(casualties: number): string {
+        if (casualties <= 0) return "0 seconds";
+        
+        const totalSeconds = casualties / INJURIES_PER_SECOND;
+        
+        if (totalSeconds < 60) {
+            return `${Math.round(totalSeconds)} seconds`;
+        } else if (totalSeconds < 3600) {
+            return `${Math.round(totalSeconds / 60)} minutes`;
+        } else if (totalSeconds < 86400) {
+            return `${Math.round(totalSeconds / 3600 * 10) / 10} hours`;
+        } else {
+            return `${Math.round(totalSeconds / 86400 * 10) / 10} days`;
+        }
+    }
+    
+    // Watch for interactive mode changes
+    $: if (interactive !== undefined && svg) {
+        console.log('Interactive mode:', interactive);
+        updateInteractiveMode();
+    }
+    
+    function updateInteractiveMode() {
+        const svgSelection = d3.select(svg);
+        
+        if (interactive) {
+            // Enable all interactive features
+            // Re-enable zoom
+            if (zoom) {
+                svgSelection.call(zoom as any);
+            }
+            
+            // Make dots clickable and update their appearance for exploration mode
+            d3.select(container).selectAll('circle')
+                .style('cursor', 'pointer')
+                .on('click', (event: MouseEvent, d: PackedDot) => handleDotClick(event, d.data))
+                .on('mouseenter', (event: MouseEvent, d: PackedDot) => handleMouseEnter(event, d.data))
+                .on('mouseleave', handleMouseLeave)
+                .attr('stroke', '#a8a8a8') // Consistent stroke color in exploration mode
+                .attr('stroke-width', 0.5);
+                
+            // Show the counter in interactive mode
+            d3.select('.counter-container').style('display', 'block');
+            
+            // Reset view button is now controlled by the toggleResetViewButton function
+            toggleResetViewButton();
+            
+            // Reset to a centered, zoomed-out view
+            resetView();
+        } else {
+            // Disable interactions in story mode
+            // Remove zoom behavior
+            if (zoom) {
+                svgSelection.on('.zoom', null);
+            }
+            
+            // Make dots non-clickable in story mode
+            d3.select(container).selectAll('circle')
+                .style('cursor', 'default')
+                .on('click', null)
+                .on('mouseenter', null)
+                .on('mouseleave', null);
+                
+            // Hide the counter and reset view button in story mode
+            d3.select('.counter-container').style('display', 'none');
+            d3.select('.reset-view-btn').style('display', 'none');
+            
+            // Clear any selected dot
+            selectedDot = null;
+        }
+    }
+    
+    // Watch for changes to selectedDot to update UI and highlighting
+    $: if (interactive && selectedDot !== undefined) {
+        toggleResetViewButton();
+        updateDotSelection();
+    }
+    
+    function toggleResetViewButton() {
+        // Only show reset view button when in interactive mode AND no dot is selected
+        const resetBtn = d3.select('.reset-view-btn');
+        resetBtn.style('display', interactive && !selectedDot ? 'block' : 'none');
+    }
+    
+    function updateDotSelection() {
+        if (!svg || !container) return;
+        
+        // Update all circles based on selection state
+        d3.select(container).selectAll('circle')
+            .attr('stroke', (d: PackedDot) => {
+                // If this is the selected dot, give it a dark gray outline
+                if (d.data === selectedDot) {
+                    return '#333333'; // Dark gray outline for selected dot
+                } 
+                else {
+                    return '#a8a8a8';
+                }
+            })
+            .attr('stroke-width', (d: PackedDot) => d.data === selectedDot ? 2.5 : 0.5);
+    }
+    
+    // Helper function to check if a dot matches the current filters
+    function matches(d: PackedDot): boolean {
+        let result = true;
+        
+        if (highlightFatalities !== null) {
+            result = result && (d.data.fatalities === highlightFatalities);
+        }
+        
+        if (highlightNumberRange !== null) {
+            result = result && (
+                d.data.numberInvolved >= highlightNumberRange.min && 
+                d.data.numberInvolved <= highlightNumberRange.max
+            );
+        }
+        
+        return result;
+    }
+    
+    function clearSelection() {
+        selectedDot = null;
+        humanizedData = null;
+        isHumanized = false;
+        error = null;
+        
+        // Show reset view button now that no dot is selected
+        toggleResetViewButton();
+    }
+
     function handleDotClick(event: MouseEvent, dot: Dot) {
         event.stopPropagation();
         selectedDot = dot;
@@ -40,8 +184,14 @@
         error = null;
         onSelectDot?.(dot);
 
-        // Find the clicked circle's data to get its position
+        // Directly update just the clicked dot's style immediately
+        // This ensures only this dot gets the special treatment
         const circles = d3.select(container).selectAll('circle');
+        circles.filter((d: PackedDot) => d.data === dot)
+            .attr('stroke', '#333333')
+            .attr('stroke-width', 2.5);
+
+        // Find the clicked circle's data to get its position
         const clickedCircle = circles.filter((d: PackedDot) => d.data === dot);
         const circleData = clickedCircle.datum() as PackedDot;
 
@@ -66,13 +216,6 @@
             .transition()
             .duration(750)
             .call(zoom.transform as any, transform);
-    }
-
-    function clearSelection() {
-        selectedDot = null;
-        humanizedData = null;
-        isHumanized = false;
-        error = null;
     }
 
     function toggleView() {
@@ -140,6 +283,16 @@
         setTimeout(() => {
             if (svg) {
                 renderChart();
+                
+                // Add event listener for reset-zoom
+                svg.addEventListener('reset-zoom', () => {
+                    resetView();
+                });
+                
+                // Add event listener for zoom-out when entering exploration mode
+                svg.addEventListener('zoom-out', () => {
+                    zoomOutView();
+                });
             }
         }, 0);
         
@@ -150,17 +303,51 @@
         };
         
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            if (svg) {
+                svg.removeEventListener('reset-zoom', resetView);
+                svg.removeEventListener('zoom-out', zoomOutView);
+            }
+        };
     });
     
     export function updateChart() {
         if (!svg) return;
+        
+        // Store current selection and transform if possible
+        let currentSelection = selectedDot;
+        let currentTransform = null;
+        if (svg) {
+            currentTransform = d3.zoomTransform(svg);
+        }
+        
+        // Clean up
         d3.select(svg).selectAll('*').remove();
+        
+        // Render with new dimensions
         renderChart();
+        
+        // Restore selection and transform if applicable
+        selectedDot = currentSelection;
+        
+        if (currentTransform && zoom) {
+            d3.select(svg)
+                .call(zoom.transform as any, currentTransform);
+        }
+        
+        // Update visuals based on current state
+        if (highlightFatalities !== null || highlightNumberRange !== null) {
+            updateHighlighting();
+        }
+        
+        if (selectedDot) {
+            updateDotSelection();
+        }
     }
     
     function renderChart() {
-        if (!svg || !dots.length) return;
+        if (!svg || !dots || !dots.length) return;
 
         const svgSelection = d3.select(svg);
         const containerSelection = d3.select(container);
@@ -213,32 +400,56 @@
             .attr('cx', (d: PackedDot) => d.x + centerOffsetX)
             .attr('cy', (d: PackedDot) => d.y + centerOffsetY)
             .attr('fill', (d: PackedDot) => d.data.fatalities ? '#FFFFFF' : '#D9D9D9')
-            .attr('stroke', (d: PackedDot) => d.data === selectedDot ? '#000000' : '#D9D9D9')
+            .attr('stroke', (d: PackedDot) => {
+                if (interactive) {
+                    return d.data === selectedDot ? '#333333' : '#a8a8a8';
+                } else {
+                    return d.data === selectedDot ? '#000000' : '#D9D9D9';
+                }
+            })
             .attr('stroke-width', (d: PackedDot) => d.data === selectedDot ? 1.5 : 0.5)
-            .style('cursor', 'pointer')
-            .on('click', (event: MouseEvent, d: PackedDot) => handleDotClick(event, d.data))
-            .on('mouseenter', (event: MouseEvent, d: PackedDot) => handleMouseEnter(event, d.data))
-            .on('mouseleave', handleMouseLeave);
+            .style('cursor', interactive ? 'pointer' : 'default');
+        
+        // Add interactivity if in interactive mode
+        if (interactive) {
+            containerSelection.selectAll('circle')
+                .on('click', (event: MouseEvent, d: PackedDot) => handleDotClick(event, d.data))
+                .on('mouseenter', (event: MouseEvent, d: PackedDot) => handleMouseEnter(event, d.data))
+                .on('mouseleave', handleMouseLeave);
+        }
 
         // Initialize zoom behavior if not already initialized
         if (!zoom) {
             zoom = d3.zoom()
-                .scaleExtent([0.5, 5])
+                .scaleExtent([0.1, 8])
                 .on('zoom', (event: any) => {
                     containerSelection.attr('transform', event.transform);
                     updateVisibleCounts();
                 });
             
-            svgSelection.call(zoom as any);
+            // Only apply zoom in interactive mode
+            if (interactive) {
+                svgSelection.call(zoom as any);
+            }
             
-            // Center the view initially
+            // Set initial transform
             const initialTransform = d3.zoomIdentity
                 .translate(width/2, height/2)
-                .scale(0.6);
+                .scale(interactive ? 0.6 : 2);
             svgSelection.call(zoom.transform as any, initialTransform);
+        } else {
+            // Re-bind zoom if it already exists
+            if (interactive) {
+                svgSelection.call(zoom as any);
+            }
         }
 
         updateVisibleCounts();
+
+        // Apply any active highlighting
+        if (highlightFatalities !== null || highlightNumberRange !== null) {
+            updateHighlighting();
+        }
     }
 
     function updateVisibleCounts() {
@@ -273,11 +484,194 @@
 
         visibleCasualties = casualties;
     }
+
+    $: if (svg && container && (highlightFatalities !== undefined || highlightNumberRange !== undefined)) {
+        updateHighlighting();
+    }
+    
+    $: if (activeSectionId && svg && container) {
+        console.log(`Active section changed to: ${activeSectionId}`);
+        // Reset filters based on which section is active
+        if (activeSectionId === "viz-injuries") {
+            // Highlight only injuries
+            updateHighlighting();
+        } else if (activeSectionId === "viz-deaths") {
+            // Highlight only deaths
+            updateHighlighting();
+        } else if (activeSectionId === "viz-small" || activeSectionId === "viz-medium" || activeSectionId === "viz-large") {
+            // Highlight by number
+            updateHighlighting();
+        } else {
+            // Reset all highlights for other sections
+            resetHighlighting();
+        }
+    }
+    
+    function resetHighlighting() {
+        if (!svg || !container) return;
+        
+        const circles = d3.select(container).selectAll('circle');
+        
+        // Reset all circles to default appearance
+        circles
+            .transition()
+            .duration(750)
+            .attr('fill', (d: PackedDot) => d.data.fatalities ? '#FFFFFF' : '#D9D9D9')
+            .attr('stroke', (d: PackedDot) => d.data === selectedDot ? '#000000' : '#D9D9D9')
+            .attr('stroke-width', (d: PackedDot) => d.data === selectedDot ? 1.5 : 0.5)
+            .attr('opacity', 1.0);
+    }
+    
+    function updateHighlighting() {
+        if (!svg || !container) return;
+        
+        const circles = d3.select(container).selectAll('circle');
+        
+        // Reset all circles to default appearance first
+        circles
+            .transition()
+            .duration(750)
+            .attr('fill', (d: PackedDot) => {
+                // Check if dot matches current filter conditions
+                let matches = true;
+                
+                // Filter by fatalities if specified
+                if (highlightFatalities !== null) {
+                    matches = matches && (d.data.fatalities === highlightFatalities);
+                }
+                
+                // Filter by number range if specified
+                if (highlightNumberRange !== null) {
+                    matches = matches && (
+                        d.data.numberInvolved >= highlightNumberRange.min && 
+                        d.data.numberInvolved <= highlightNumberRange.max
+                    );
+                }
+                
+                // Highlighted dots are colored based on type:
+                // - Deaths (fatalities) = red
+                // - Other highlights = dark gray
+                // - Non-highlighted = very light
+                if (matches) {
+                    return highlightFatalities === true ? '#D32F2F' : '#555555';
+                } else {
+                    return '#F2F2F2';
+                }
+            })
+            .attr('stroke', (d: PackedDot) => {
+                // Determine stroke color
+                if (interactive) {
+                    // In exploration mode, use consistent stroke colors
+                    return d.data === selectedDot ? '#333333' : '#a8a8a8';
+                }
+                
+                // Otherwise, use highlighting-based stroke colors
+                let matches = true;
+                
+                if (highlightFatalities !== null) {
+                    matches = matches && (d.data.fatalities === highlightFatalities);
+                }
+                
+                if (highlightNumberRange !== null) {
+                    matches = matches && (
+                        d.data.numberInvolved >= highlightNumberRange.min && 
+                        d.data.numberInvolved <= highlightNumberRange.max
+                    );
+                }
+                
+                // Selected dot = black
+                // Deaths = darker red
+                // Other highlights = dark gray
+                // Non-highlighted = very light
+                if (d.data === selectedDot) {
+                    return '#000000';
+                } else if (matches) {
+                    return highlightFatalities === true ? '#B71C1C' : '#333333';
+                } else {
+                    return '#EBEBEB';
+                }
+            })
+            .attr('stroke-width', (d: PackedDot) => {
+                if (interactive) {
+                    // In exploration mode, use consistent stroke widths
+                    return d.data === selectedDot ? 2.5 : 0.5;
+                }
+                
+                // If dot matches current filter, give it a stronger stroke
+                let matches = true;
+                
+                if (highlightFatalities !== null) {
+                    matches = matches && (d.data.fatalities === highlightFatalities);
+                }
+                
+                if (highlightNumberRange !== null) {
+                    matches = matches && (
+                        d.data.numberInvolved >= highlightNumberRange.min && 
+                        d.data.numberInvolved <= highlightNumberRange.max
+                    );
+                }
+                
+                return d.data === selectedDot ? 1.5 : (matches ? 1.0 : 0.5);
+            })
+            .attr('opacity', (d: PackedDot) => {
+                // Check if dot matches current filter conditions
+                let matches = true;
+                
+                // Filter by fatalities if specified
+                if (highlightFatalities !== null) {
+                    matches = matches && (d.data.fatalities === highlightFatalities);
+                }
+                
+                // Filter by number range if specified
+                if (highlightNumberRange !== null) {
+                    matches = matches && (
+                        d.data.numberInvolved >= highlightNumberRange.min && 
+                        d.data.numberInvolved <= highlightNumberRange.max
+                    );
+                }
+                
+                // Highlighted dots full opacity, others faded
+                return matches ? 1.0 : 0.3;
+            });
+    }
+
+    function resetView() {
+        if (!svg || !zoom) return;
+        
+        // Create a transform that centers the view and sets a consistent zoom level
+        const initialTransform = d3.zoomIdentity
+            .translate(width/2, height/2)
+            .scale(2);
+            
+        // Apply transform with animation
+        d3.select(svg)
+            .transition()
+            .duration(750)
+            .call(zoom.transform as any, initialTransform);
+            
+        // Clear any selection
+        selectedDot = null;
+    }
+    
+    function zoomOutView() {
+        if (!svg || !zoom) return;
+        
+        // Create a transform that zooms out to get a broader view
+        const zoomOutTransform = d3.zoomIdentity
+            .translate(width/2, height/2)
+            .scale(0.6);
+            
+        // Apply transform with animation
+        d3.select(svg)
+            .transition()
+            .duration(1000) // Slightly longer for the exploration entry animation
+            .call(zoom.transform as any, zoomOutTransform);
+    }
 </script>
 
 <div class="relative w-full h-full {className}">
     <!-- Tooltip -->
-    {#if hoveredDot}
+    {#if hoveredDot && interactive}
     <div 
         class="fixed z-50 bg-white/70 border border-black px-3 py-2 max-w-xs pointer-events-none"
         style="left: {hoveredDot.x}px; top: {Math.max(0, hoveredDot.y - 8)}px; transform: translate(-50%, -100%);"
@@ -287,10 +681,23 @@
     {/if}
 
     <!-- Counter -->
-    <div class="absolute top-4 right-4 bg-white border border-black rounded-md p-4 shadow-lg">
-        <p class="text-sm">Currently visible:</p>
-        <p class="font-medium">{visibleCasualties} casualties</p>
+    <div class="counter-container absolute top-4 right-4 bg-white border border-black rounded-md p-4 shadow-lg" style="display: none;">
+        <p class="text-sm mb-1">Currently visible:</p>
+        <p class="font-medium text-lg mb-2">{visibleCasualties} casualties</p>
+        <div class="border-t border-gray-300 pt-2 mt-1">
+            <p class="text-xs text-gray-600">That's how many people will be injured in global road traffic in the next</p>
+            <p class="font-medium text-sm text-gray-800">{getTimeForCasualties(visibleCasualties)}</p>
+        </div>
     </div>
+    
+    <!-- Reset view button -->
+    <button 
+        class="reset-view-btn absolute top-4 left-4 bg-white border border-black rounded-md px-4 py-2 shadow-lg z-50"
+        style="display: none;"
+        on:click={resetView}
+    >
+        Reset View
+    </button>
 
     <svg 
         bind:this={svg} 
@@ -302,11 +709,9 @@
         <g bind:this={container}></g>
     </svg>
 
-    <!-- Legend -->
-    {#if !selectedDot}
-    <div class="absolute top-4 left-4 bg-white border border-black rounded-md p-4 shadow-lg max-w-xs">
-        
-
+    <!-- Legend in interactive mode -->
+    {#if interactive && !selectedDot}
+    <div class="absolute top-20 left-4 bg-white border border-black rounded-md p-4 shadow-lg max-w-xs">
         <h3 class="font-medium mb-2">Legend</h3>
         <p class="text-sm mb-4">Injuries or deaths reported</p>
         
@@ -332,8 +737,8 @@
     </div>
     {/if}
 
-    <!-- Modal -->
-    {#if selectedDot}
+    <!-- Modal for clicked dot in interactive mode -->
+    {#if selectedDot && interactive}
     <div class="absolute top-4 left-4 bg-white border border-black rounded-md px-8 py-6 shadow-lg max-w-xs">
         <button 
             on:click={clearSelection}
