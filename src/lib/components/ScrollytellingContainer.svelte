@@ -10,6 +10,8 @@
     let windowWidth: number;
     let windowHeight: number;
     let visibleSectionIndex = 0;
+    let currentSectionId: string = '';
+    let sections: HTMLElement[] = [];
     
     // Visualization state that will be passed to PackedCircleChart
     let highlightFatalities: boolean | null = null;
@@ -24,11 +26,15 @@
             console.log(`Generated ${dots.length} dots for visualization`);
         }
         
+        // Collect all sections for navigation
+        sections = Array.from(document.querySelectorAll('.section'));
+        
         // Handle section visibility detection
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const sectionId = entry.target.id;
+                    currentSectionId = sectionId;
                     
                     // Only apply new filters if section actually changed
                     if (activeSectionId !== sectionId) {
@@ -141,6 +147,19 @@
             });
         }
     }
+    
+    function scrollToNextSection() {
+        if (!currentSectionId || explorationMode) return;
+        
+        // Find current section index
+        const currentIndex = sections.findIndex(section => section.id === currentSectionId);
+        
+        // If found and not the last section, scroll to the next one
+        if (currentIndex !== -1 && currentIndex < sections.length - 1) {
+            const nextSection = sections[currentIndex + 1];
+            scrollToSection(nextSection.id);
+        }
+    }
 </script>
 
 <svelte:window bind:innerWidth={windowWidth} bind:innerHeight={windowHeight} />
@@ -174,6 +193,19 @@
             Back to Story
         </button>
     </div>
+    {/if}
+    
+    <!-- Down arrow navigation button -->
+    {#if !explorationMode}
+    <button 
+        class="down-arrow-btn"
+        on:click={scrollToNextSection}
+        aria-label="Scroll to next section"
+    >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M7 13l5 5 5-5M7 6l5 5 5-5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+    </button>
     {/if}
 </div>
 
@@ -215,5 +247,35 @@
     
     .exit-exploration-btn:hover {
         background-color: #555;
+    }
+    
+    .down-arrow-btn {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        background-color: white;
+        color: #333;
+        border: 2px solid #333;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        transition: all 0.2s ease;
+    }
+    
+    .down-arrow-btn:hover {
+        background-color: #333;
+        color: white;
+        transform: translateX(-50%) translateY(-4px);
+    }
+    
+    .down-arrow-btn:active {
+        transform: translateX(-50%) translateY(0);
     }
 </style> 

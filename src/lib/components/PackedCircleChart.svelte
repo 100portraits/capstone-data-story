@@ -435,7 +435,7 @@
             // Set initial transform
             const initialTransform = d3.zoomIdentity
                 .translate(width/2, height/2)
-                .scale(interactive ? 0.6 : 2);
+                .scale(interactive ? 0.6 : 1.5);
             svgSelection.call(zoom.transform as any, initialTransform);
         } else {
             // Re-bind zoom if it already exists
