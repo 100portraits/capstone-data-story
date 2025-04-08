@@ -6,8 +6,6 @@
     export let heading: string = "";
     export let text: string = "";
     export let subtext: string = "";
-    export let showViz: boolean = true;
-    export let highlightDotCriteria: Partial<Record<keyof Dot["criteria"], boolean>> = {};
     export let backgroundColor: string = "transparent";
     export let boxOpacity: number = 0.85;
     export let boxPosition: "center" | "left" | "right" = "center";

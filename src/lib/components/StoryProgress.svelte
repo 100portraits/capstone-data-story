@@ -27,14 +27,17 @@
     <nav class="progress-nav">
         <ul>
             {#each sections as section}
-                <li 
-                    class="progress-item {activeSection === section.id ? 'active' : ''}"
-                    on:click={() => handleSectionClick(section.id)}
-                >
-                    <div class="progress-dot"></div>
-                    {#if showLabels}
-                        <span class="progress-label">{section.label}</span>
-                    {/if}
+                <li class="progress-item {activeSection === section.id ? 'active' : ''}">
+                    <button 
+                        class="progress-button"
+                        on:click={() => handleSectionClick(section.id)}
+                        aria-label="Go to {section.label} section"
+                    >
+                        <div class="progress-dot"></div>
+                        {#if showLabels}
+                            <span class="progress-label">{section.label}</span>
+                        {/if}
+                    </button>
                 </li>
             {/each}
         </ul>
@@ -100,14 +103,22 @@
     }
     
     .progress-item {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        padding: 4px;
+        margin: 0;
+        padding: 0;
     }
     
-    .horizontal .progress-item {
+    .progress-button {
+        display: flex;
+        align-items: center;
+        background: none;
+        border: none;
+        padding: 4px;
+        cursor: pointer;
+        width: 100%;
+        transition: all 0.2s ease;
+    }
+    
+    .horizontal .progress-button {
         flex-direction: column;
     }
     
