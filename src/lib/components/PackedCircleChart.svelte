@@ -428,8 +428,10 @@
                 .radius((d: any) => {
                     if (d.data.numberInvolved === 1) return 6;
                     if (d.data.numberInvolved >= 2 && d.data.numberInvolved <= 5) return 12;
-                    return 24;
+                    if (d.data.numberInvolved >= 6 && d.data.numberInvolved <= 15) return 24;
+                    return 45
                 });
+
 
             const root = d3.hierarchy(hierarchyData)
                 .sum((d: any) => d.value);
@@ -912,7 +914,7 @@
         
         <!-- Size indicators -->
         <div class="flex items-center gap-6 mb-6">
-            {#each [{label: '1', size: '10px'}, {label: '2-5', size: '20px'}, {label: '5+', size: '40px'}] as {label, size}}
+            {#each [{label: '1', size: '6px'}, {label: '2-5', size: '12px'}, {label: '6-15', size: '24px'}, {label: '16+', size: '45px'}] as {label, size}}
             <div class="flex flex-col items-center">
                 <div class="border border-black rounded-full mb-1" style="width: {size}; height: {size}"></div>
                 <span class="text-sm">{label}</span>
@@ -934,7 +936,7 @@
 
     <!-- Modal for clicked dot in interactive mode -->
     {#if selectedDot && interactive}
-    <div class="absolute top-4 left-4 bg-white border border-black rounded-md md:px-8 md:py-6 px-4 pr-10 py-3 shadow-lg max-w-xs">
+    <div class="absolute top-4 left-4 bg-white border border-black rounded-md md:px-8 md:py-6 px-4 pr-10 py-3 shadow-lg max-w-md">
         <button 
             on:click={clearSelection}
             class="absolute top-2 right-2 p-1 rounded-sm"
@@ -945,33 +947,73 @@
             </svg>
         </button>
         
-        <h3 class="text-2xl  md:mb-4 mb-2">
+        <h3 class="text-2xl md:mb-4 mb-2">
             {#if isHumanized && humanizedData}
                 {humanizedData.humanizedHeadline}
             {:else}
                 {selectedDot.headline}
             {/if}
         </h3>
-        <p class="text-sm md:mb-4 mb-2">
-            Casualties: {selectedDot.numberInvolved}
-        </p>
+        <div class="flex items-center justify-between">
+            <p class="text-sm md:mb-4 mb-2">
+                Casualties: {selectedDot.numberInvolved}
+            </p>
+            
+        <p class="text-sm md:mb-4 mb-2 {!isHumanized ? 'block' : 'hidden'}">
+                <a href="{selectedDot.source}" target="_blank" class="text-gray-600 underline">Source</a>
+            </p>
+        </div>
         <hr class="border-black md:mb-4 mb-2">
-        <h4 class="text-lg  md:mb-2 mb-1">Criteria</h4>
-        <div class="space-y-2 md:mb-4 mb-3">
+        <h4 class="text-lg md:mb-2 mb-1">Criteria</h4>
+        <div class="space-y-4 md:mb-4 mb-3">
             {#if isHumanized && humanizedData}
-                {#each Object.entries(humanizedData.humanizedCriteria) as [key, { value, description }]}
-                <div class="flex items-center gap-3">
-                    <div class="w-6 h-4 md:w-8 md:h-6 {value ? 'bg-red-500' : 'bg-gray-300'}"></div>
-                    <span class="text-sm">{description}</span>
+                <div>
+                    <div class="flex items-center gap-3 mb-1">
+                        <div class="w-6 h-4 md:w-8 md:h-6 {humanizedData.humanizedCriteria.criteria1.value ? 'bg-red-500' : 'bg-gray-300'}"></div>
+                        <span class="text-sm font-medium {humanizedData.humanizedCriteria.criteria1.value ? 'text-black' : 'text-gray-500'}">Mentions all parties</span>
+                    </div>
+                    <p class="text-sm text-gray-600 pl-11">{humanizedData.humanizedCriteria.criteria1.description}</p>
                 </div>
-                {/each}
+                
+                <div>
+                    <div class="flex items-center gap-3 mb-1">
+                        <div class="w-6 h-4 md:w-8 md:h-6 {humanizedData.humanizedCriteria.criteria2.value ? 'bg-red-500' : 'bg-gray-300'}"></div>
+                        <span class="text-sm font-medium {humanizedData.humanizedCriteria.criteria2.value ? 'text-black' : 'text-gray-500'}">Uses human terms</span>
+                    </div>
+                    <p class="text-sm text-gray-600 pl-11">{humanizedData.humanizedCriteria.criteria2.description}</p>
+                </div>
+                
+                <div>
+                    <div class="flex items-center gap-3 mb-1">
+                        <div class="w-6 h-4 md:w-8 md:h-6 {humanizedData.humanizedCriteria.criteria3.value ? 'bg-red-500' : 'bg-gray-300'}"></div>
+                        <span class="text-sm font-medium {humanizedData.humanizedCriteria.criteria3.value ? 'text-black' : 'text-gray-500'}">Uses active voice</span>
+                    </div>
+                    <p class="text-sm text-gray-600 pl-11">{humanizedData.humanizedCriteria.criteria3.description}</p>
+                </div>
             {:else}
-                {#each Object.entries(selectedDot.criteria) as [key, value]}
-                <div class="flex items-center gap-3">
-                    <div class="w-6 h-4 md:w-8 md:h-6 {value ? 'bg-red-500' : 'bg-gray-300'}"></div>
-                    <span class="text-sm {value ? 'text-black' : 'text-gray-500'}">Condition {key.slice(-1)}</span>
+                <div>
+                    <div class="flex items-center gap-3 mb-1">
+                        <div class="w-6 h-4 md:w-8 md:h-6 {selectedDot.criteria.criteria1 ? 'bg-red-500' : 'bg-gray-300'}"></div>
+                        <span class="text-sm font-medium {selectedDot.criteria.criteria1 ? 'text-black' : 'text-gray-500'}">Mentions all parties</span>
+                    </div>
+                    <p class="text-sm text-gray-600 pl-11">{selectedDot.criteria.criteria1explanation}</p>
                 </div>
-                {/each}
+                
+                <div>
+                    <div class="flex items-center gap-3 mb-1">
+                        <div class="w-6 h-4 md:w-8 md:h-6 {selectedDot.criteria.criteria2 ? 'bg-red-500' : 'bg-gray-300'}"></div>
+                        <span class="text-sm font-medium {selectedDot.criteria.criteria2 ? 'text-black' : 'text-gray-500'}">Uses human terms</span>
+                    </div>
+                    <p class="text-sm text-gray-600 pl-11">{selectedDot.criteria.criteria2explanation}</p>
+                </div>
+                
+                <div>
+                    <div class="flex items-center gap-3 mb-1">
+                        <div class="w-6 h-4 md:w-8 md:h-6 {selectedDot.criteria.criteria3 ? 'bg-red-500' : 'bg-gray-300'}"></div>
+                        <span class="text-sm font-medium {selectedDot.criteria.criteria3 ? 'text-black' : 'text-gray-500'}">Uses active voice</span>
+                    </div>
+                    <p class="text-sm text-gray-600 pl-11">{selectedDot.criteria.criteria3explanation}</p>
+                </div>
             {/if}
         </div>
 
@@ -994,4 +1036,4 @@
         </button>
     </div>
     {/if}
-</div> 
+</div>

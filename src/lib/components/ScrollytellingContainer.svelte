@@ -1,10 +1,12 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import PackedCircleChart from './PackedCircleChart.svelte';
-    import { generateDots, type Dot } from '$lib/types/data';
+    import type { Dot } from '$lib/types/data';
+    import { loadData, DataSource } from '$lib/utils/dataLoader';
     
     export let showViz: boolean = true;
     export let initViz: boolean = true;
+    export let dataCount: number = 500;
     
     let dots: Dot[] = [];
     let windowWidth: number;
@@ -21,9 +23,17 @@
     
     onMount(() => {
         if (initViz) {
-            // Generate dots for visualization
-            dots = generateDots(500);
-            console.log(`Generated ${dots.length} dots for visualization`);
+            let source = DataSource.CSV;
+            // Load data for visualization using the data utility
+            loadData({
+                source: source,
+                filePath: '/data.csv',
+                count: dataCount
+            }).then(result => {
+                dots = result;
+                console.log(`Loaded ${dots.length} dots for visualization using the ${source} data source`);
+                
+            });
         }
         
         // Collect all sections for navigation

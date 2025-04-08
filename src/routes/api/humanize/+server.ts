@@ -4,34 +4,27 @@ import type { RequestHandler } from './$types';
 export const POST: RequestHandler = async ({ request }) => {
     try {
         const dot = await request.json();
-        
-        // For now, return mock data
+
+        console.log(dot);
+        // Implement the real logic here - pull from the Dot object
         return json({
             id: dot.id,
-            humanizedHeadline: "Humanized headline #" + dot.id,
+            humanizedHeadline: dot.humanized_headline,
             humanizedCriteria: {
                 criteria1: {
-                    value: true,
-                    description: "Humanized criteria 1"
+                    value: dot.rewritten.rewritten_criteria.criteria1fixed,
+                    description: dot.rewritten.rewritten_criteria.criteria1fixedexplanation
                 },
                 criteria2: {
-                    value: true,
-                    description: "Humanized criteria 2"
+                    value: dot.rewritten.rewritten_criteria.criteria2fixed,
+                    description: dot.rewritten.rewritten_criteria.criteria2fixedexplanation
                 },
                 criteria3: {
-                    value: true,
-                    description: "Humanized criteria 3"
-                },
-                criteria4: {
-                    value: true,
-                    description: "Humanized criteria 4"
-                },
-                criteria5: {
-                    value: true,
-                    description: "Humanized criteria 5"
+                    value: dot.rewritten.rewritten_criteria.criteria3fixed,
+                    description: dot.rewritten.rewritten_criteria.criteria3fixedexplanation
                 }
-            },
-            timestamp: new Date().toISOString()
+            }
+            
         });
     } catch (error) {
         return new Response(JSON.stringify({ error: 'Invalid request' }), {
