@@ -20,6 +20,8 @@
         { id: "analysis", label: "Analysis" },
         { id: "viz-three-criteria", label: "Three Criteria" },
         { id: "viz-three-criteria-p2", label: "Three Criteria (p2)" },
+        { id: "viz-one-point", label: "One Point" },
+        { id: "viz-one-point-p2", label: "One Point (p2)" },
 
         { id: "explore", label: "Explore" }
     ];
@@ -195,7 +197,25 @@
         scrollToMe={sectionToScrollTo === "viz-three-criteria-p2"}
     />
     
+    <!-- Detail visualization 3: zooming in on one point)-->
+    <VisualizationSection
+        id="viz-one-point"
+        heading="Zooming in on one point"	
+        backgroundColor="transparent"
+        boxPosition="center"
+        boxOpacity={0.9}
+        scrollToMe={sectionToScrollTo === "viz-one-point"}
+    />
 
+    <!-- Detail visualization 4: zooming in on one point (p2)-->
+    <VisualizationSection
+        id="viz-one-point-p2"
+        heading="Zooming in on one point (p2)"	
+        backgroundColor="transparent"
+        boxPosition="center"
+        boxOpacity={0.9}
+        scrollToMe={sectionToScrollTo === "viz-one-point-p2"}
+    />
     
 
     

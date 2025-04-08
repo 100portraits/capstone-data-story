@@ -20,6 +20,7 @@
     let highlightFatalities: boolean | null = null;
     let highlightNumberRange: {min: number, max: number} | null = null;
     let allCriteriaTrue: boolean | null = null;
+    let onePoint: boolean | null = null;
     let activeSectionId: string = '';
     let explorationMode: boolean = false;
     
@@ -62,13 +63,29 @@
                             highlightDots({ 
                                 fatalities: null, 
                                 numberRange: null,
-                                allCriteriaTrue: true
+                                allCriteriaTrue: true,
+                                onePoint: null
                             });
                         } else if (sectionId === "viz-three-criteria-p2") {
                             highlightDots({ 
                                 fatalities: null,
                                 numberRange: null,
-                                allCriteriaTrue: true
+                                allCriteriaTrue: true,
+                                onePoint: null
+                            });
+                        } else if (sectionId === "viz-one-point") {
+                            highlightDots({ 
+                                fatalities: null,
+                                numberRange: null,
+                                allCriteriaTrue: null,
+                                onePoint: true
+                            });
+                        } else if (sectionId === "viz-one-point-p2") {
+                            highlightDots({ 
+                                fatalities: null,
+                                numberRange: null,
+                                allCriteriaTrue: null,
+                                onePoint: true
                             });
                         }
                     }
@@ -97,7 +114,8 @@
     export function highlightDots(params: {
         fatalities?: boolean | null;
         numberRange?: {min: number, max: number} | null;
-        allCriteriaTrue?: boolean;
+        allCriteriaTrue?: boolean | null;
+        onePoint?: boolean | null;
     }) {
         // Update visualization state
         if (params.fatalities !== undefined) {
@@ -110,6 +128,10 @@
         
         if (params.allCriteriaTrue !== undefined) {
             allCriteriaTrue = params.allCriteriaTrue;
+        }
+
+        if (params.onePoint !== undefined) {
+            onePoint = params.onePoint;
         }
         
         console.log('Highlighting dots with:', params);
@@ -186,6 +208,7 @@
                 {highlightFatalities}
                 {highlightNumberRange}
                 {allCriteriaTrue}
+                {onePoint}
                 {activeSectionId}
                 interactive={explorationMode}
             />

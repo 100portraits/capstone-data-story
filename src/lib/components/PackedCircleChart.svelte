@@ -24,7 +24,8 @@
     export let allCriteriaTrue: boolean | null = null;
     export let activeSectionId: string = "";
     export let interactive: boolean = false;
-    
+    export let onePoint: boolean | null = null;
+
     let svg: SVGSVGElement;
     let container: SVGGElement;
     let selectedDot: Dot | null = null;
@@ -561,7 +562,7 @@
         visibleCasualties = casualties;
     }
 
-    $: if (svg && container && (highlightFatalities !== undefined || highlightNumberRange !== undefined)) {
+    $: if (svg && container && (highlightFatalities !== undefined || highlightNumberRange !== undefined || allCriteriaTrue !== undefined || onePoint !== undefined)) {
         updateHighlighting();
     }
     
@@ -573,6 +574,12 @@
             updateHighlighting();
         } else if (activeSectionId === "viz-three-criteria-p2") {
             // Highlight only ones with all three criteria
+            updateHighlighting();
+        } else if (activeSectionId === "viz-one-point") {
+            // Highlight only one point
+            updateHighlighting();
+        } else if (activeSectionId === "viz-one-point-p2") {
+            // Highlight only one point
             updateHighlighting();
         } else {
             // Reset all highlights for other sections
@@ -600,41 +607,52 @@
         
         const circles = d3.select(container).selectAll('circle');
         
+        // Helper function to determine if a dot matches current filters
+        function dotMatches(d: PackedDot) {
+            let matches = true;
+            
+            // Filter by fatalities if specified
+            if (highlightFatalities !== null) {
+                matches = matches && (d.data.fatalities === highlightFatalities);
+            }
+            
+            // Filter by number range if specified
+            if (highlightNumberRange !== null) {
+                matches = matches && (
+                    d.data.numberInvolved >= highlightNumberRange.min && 
+                    d.data.numberInvolved <= highlightNumberRange.max
+                );
+            }
+            
+            // Filter by all criteria being true if specified
+            if (allCriteriaTrue === true) {
+                matches = matches && (
+                    d.data.criteria.criteria1 === true && 
+                    d.data.criteria.criteria2 === true && 
+                    d.data.criteria.criteria3 === true
+                );
+            }
+
+            // Filter by one point if specified
+            if (onePoint === true) {
+                matches = matches && (
+                    d.data.id === 1
+                );
+            }
+            
+            return matches;
+        }
+        
         // Reset all circles to default appearance first
         circles
             .transition()
             .duration(750)
             .attr('fill', (d: PackedDot) => {
-                // Check if dot matches current filter conditions
-                let matches = true;
-                
-                // Filter by fatalities if specified
-                if (highlightFatalities !== null) {
-                    matches = matches && (d.data.fatalities === highlightFatalities);
-                }
-                
-                // Filter by number range if specified
-                if (highlightNumberRange !== null) {
-                    matches = matches && (
-                        d.data.numberInvolved >= highlightNumberRange.min && 
-                        d.data.numberInvolved <= highlightNumberRange.max
-                    );
-                }
-                
-                // Filter by all criteria being true if specified
-                if (allCriteriaTrue === true) {
-                    matches = matches && (
-                        d.data.criteria.criteria1 === true && 
-                        d.data.criteria.criteria2 === true && 
-                        d.data.criteria.criteria3 === true
-                    );
-                }
-                
                 // Highlighted dots are colored based on type:
                 // - Deaths (fatalities) = red
                 // - Other highlights = dark gray
                 // - Non-highlighted = very light
-                if (matches) {
+                if (dotMatches(d)) {
                     return highlightFatalities === true ? '#D32F2F' : '#555555';
                 } else {
                     return '#F2F2F2';
@@ -648,35 +666,13 @@
                 }
                 
                 // Otherwise, use highlighting-based stroke colors
-                let matches = true;
-                
-                if (highlightFatalities !== null) {
-                    matches = matches && (d.data.fatalities === highlightFatalities);
-                }
-                
-                if (highlightNumberRange !== null) {
-                    matches = matches && (
-                        d.data.numberInvolved >= highlightNumberRange.min && 
-                        d.data.numberInvolved <= highlightNumberRange.max
-                    );
-                }
-                
-                // Filter by all criteria being true if specified
-                if (allCriteriaTrue === true) {
-                    matches = matches && (
-                        d.data.criteria.criteria1 === true && 
-                        d.data.criteria.criteria2 === true && 
-                        d.data.criteria.criteria3 === true
-                    );
-                }
-                
                 // Selected dot = black
                 // Deaths = darker red
                 // Other highlights = dark gray
                 // Non-highlighted = very light
                 if (d.data === selectedDot) {
                     return '#000000';
-                } else if (matches) {
+                } else if (dotMatches(d)) {
                     return highlightFatalities === true ? '#B71C1C' : '#333333';
                 } else {
                     return '#EBEBEB';
@@ -688,59 +684,11 @@
                     return d.data === selectedDot ? 2.5 : 0.5;
                 }
                 
-                // If dot matches current filter, give it a stronger stroke
-                let matches = true;
-                
-                if (highlightFatalities !== null) {
-                    matches = matches && (d.data.fatalities === highlightFatalities);
-                }
-                
-                if (highlightNumberRange !== null) {
-                    matches = matches && (
-                        d.data.numberInvolved >= highlightNumberRange.min && 
-                        d.data.numberInvolved <= highlightNumberRange.max
-                    );
-                }
-                
-                // Filter by all criteria being true if specified
-                if (allCriteriaTrue === true) {
-                    matches = matches && (
-                        d.data.criteria.criteria1 === true && 
-                        d.data.criteria.criteria2 === true && 
-                        d.data.criteria.criteria3 === true
-                    );
-                }
-                
-                return d.data === selectedDot ? 1.5 : (matches ? 1.0 : 0.5);
+                return d.data === selectedDot ? 1.5 : (dotMatches(d) ? 1.0 : 0.5);
             })
             .attr('opacity', (d: PackedDot) => {
-                // Check if dot matches current filter conditions
-                let matches = true;
-                
-                // Filter by fatalities if specified
-                if (highlightFatalities !== null) {
-                    matches = matches && (d.data.fatalities === highlightFatalities);
-                }
-                
-                // Filter by number range if specified
-                if (highlightNumberRange !== null) {
-                    matches = matches && (
-                        d.data.numberInvolved >= highlightNumberRange.min && 
-                        d.data.numberInvolved <= highlightNumberRange.max
-                    );
-                }
-                
-                // Filter by all criteria being true if specified
-                if (allCriteriaTrue === true) {
-                    matches = matches && (
-                        d.data.criteria.criteria1 === true && 
-                        d.data.criteria.criteria2 === true && 
-                        d.data.criteria.criteria3 === true
-                    );
-                }
-                
                 // Highlighted dots full opacity, others faded
-                return matches ? 1.0 : 0.3;
+                return dotMatches(d) ? 1.0 : 0.3;
             });
     }
 
