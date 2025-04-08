@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import PackedCircleChart from './PackedCircleChart.svelte';
-    import { generateDots, type Dot } from '$lib/data';
+    import { generateDots, type Dot } from '$lib/types/data';
     
     export let showViz: boolean = true;
     export let initViz: boolean = true;
@@ -22,7 +22,7 @@
     onMount(() => {
         if (initViz) {
             // Generate dots for visualization
-            dots = generateDots(5000);
+            dots = generateDots(500);
             console.log(`Generated ${dots.length} dots for visualization`);
         }
         

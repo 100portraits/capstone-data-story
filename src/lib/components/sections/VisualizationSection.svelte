@@ -1,13 +1,13 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import type { Dot } from '$lib/data';
+    import type { Dot } from '$lib/types/data';
     
     export let id: string = "";
     export let heading: string = "";
     export let text: string = "";
     export let subtext: string = "";
     export let backgroundColor: string = "transparent";
-    export let boxOpacity: number = 0.85;
+    export let boxOpacity: number = 1;
     export let boxPosition: "center" | "left" | "right" = "center";
     export let scrollToMe: boolean = false;
     
@@ -27,7 +27,7 @@
                 onSectionExit?.();
             }
         }, {
-            threshold: 0.5
+            threshold: 0.8
         });
         
         observer.observe(sectionElem);

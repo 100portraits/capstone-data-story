@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import * as d3 from 'd3';
-    import type { Dot } from '$lib/data';
+    import type { Dot } from '$lib/types/data';
     
     interface PackedDot extends Dot {
         value: number;
@@ -38,6 +38,8 @@
     let centerOffsetX = 0;
     let centerOffsetY = 0;
     let isMobile = false;
+
+    
     
     // Check if the device is mobile
     $: isMobile = width <= 768;

@@ -1,11 +1,11 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import ScrollytellingContainer from '$lib/components/ScrollytellingContainer.svelte';
-    import ScrollSection from '$lib/components/ScrollSection.svelte';
-    import QuoteBlock from '$lib/components/QuoteBlock.svelte';
-    import HeadlineComparison from '$lib/components/HeadlineComparison.svelte';
-    import VisualizationSection from '$lib/components/VisualizationSection.svelte';
-    import StoryProgress from '$lib/components/StoryProgress.svelte';
+    import ScrollSection from '$lib/components/sections/StorySection.svelte';
+    import QuoteBlock from '$lib/components/ui/QuoteBlock.svelte';
+    import HeadlineComparison from '$lib/components/ui/HeadlineComparison.svelte';
+    import VisualizationSection from '$lib/components/sections/VisualizationSection.svelte';
+    import StoryProgress from '$lib/components/ui/ProgressDots.svelte';
     
     let scrollContainer: ScrollytellingContainer;
     let activeSection = "intro";
@@ -226,6 +226,8 @@
         boxOpacity={0.9}
         scrollToMe={sectionToScrollTo === "viz-large"}
     />
+    
+
     
     <!-- Exploration mode section -->
     <ScrollSection 
