@@ -19,6 +19,7 @@
     // Visualization state that will be passed to PackedCircleChart
     let highlightFatalities: boolean | null = null;
     let highlightNumberRange: {min: number, max: number} | null = null;
+    let allCriteriaTrue: boolean | null = null;
     let activeSectionId: string = '';
     let explorationMode: boolean = false;
     
@@ -57,24 +58,17 @@
                         console.log(`Section ${sectionId} is now visible`);
                         
                         // Apply filters specific to the active section
-                        if (sectionId === "viz-injuries") {
-                            highlightDots({ fatalities: false, numberRange: null });
-                        } else if (sectionId === "viz-deaths") {
-                            highlightDots({ fatalities: true, numberRange: null });
-                        } else if (sectionId === "viz-small") {
+                        if (sectionId === "viz-three-criteria") {
                             highlightDots({ 
-                                numberRange: { min: 1, max: 1 },
-                                fatalities: null
+                                fatalities: null, 
+                                numberRange: null,
+                                allCriteriaTrue: true
                             });
-                        } else if (sectionId === "viz-medium") {
+                        } else if (sectionId === "viz-three-criteria-p2") {
                             highlightDots({ 
-                                numberRange: { min: 2, max: 5 },
-                                fatalities: null
-                            });
-                        } else if (sectionId === "viz-large") {
-                            highlightDots({ 
-                                numberRange: { min: 6, max: 100 },
-                                fatalities: null
+                                fatalities: null,
+                                numberRange: null,
+                                allCriteriaTrue: true
                             });
                         }
                     }
@@ -96,12 +90,14 @@
         // Reset all filters
         highlightFatalities = null;
         highlightNumberRange = null;
+        allCriteriaTrue = null;
         console.log('Filters reset');
     }
     
     export function highlightDots(params: {
         fatalities?: boolean | null;
         numberRange?: {min: number, max: number} | null;
+        allCriteriaTrue?: boolean;
     }) {
         // Update visualization state
         if (params.fatalities !== undefined) {
@@ -110,6 +106,10 @@
         
         if (params.numberRange !== undefined) {
             highlightNumberRange = params.numberRange;
+        }
+        
+        if (params.allCriteriaTrue !== undefined) {
+            allCriteriaTrue = params.allCriteriaTrue;
         }
         
         console.log('Highlighting dots with:', params);
@@ -185,6 +185,7 @@
                 className=""
                 {highlightFatalities}
                 {highlightNumberRange}
+                {allCriteriaTrue}
                 {activeSectionId}
                 interactive={explorationMode}
             />

@@ -18,11 +18,9 @@
         { id: "headline-speeder", label: "Headline 2" },
         { id: "headline-comparison", label: "Comparison" },
         { id: "analysis", label: "Analysis" },
-        { id: "viz-injuries", label: "Injuries" },
-        { id: "viz-deaths", label: "Deaths" },
-        { id: "viz-small", label: "1 Person" },
-        { id: "viz-medium", label: "2-5 People" },
-        { id: "viz-large", label: "5+ People" },
+        { id: "viz-three-criteria", label: "Three Criteria" },
+        { id: "viz-three-criteria-p2", label: "Three Criteria (p2)" },
+
         { id: "explore", label: "Explore" }
     ];
     
@@ -177,55 +175,27 @@
         </div>
     </ScrollSection>
     
-    <!-- Detail visualization 1: Injuries -->
+    <!-- Detail visualization 1: three criteria -->
     <VisualizationSection
-        id="viz-injuries"
-        heading="Consequences of traffic accidents can range between just injuries"
+        id="viz-three-criteria"
+        heading="Here are traffic crashes reported with all three good journalism criteria"
         backgroundColor="transparent"
         boxPosition="center"
         boxOpacity={0.9}
-        scrollToMe={sectionToScrollTo === "viz-injuries"}
+        scrollToMe={sectionToScrollTo === "viz-three-criteria"}
     />
     
-    <!-- Detail visualization 2: Deaths -->
+    <!-- Detail visualization 2: three criteria (p2)-->
     <VisualizationSection
-        id="viz-deaths"
-        heading="...to both injuries and deaths"
+        id="viz-three-criteria-p2"
+        heading="Here are crashes reported with all three good journalism criteria (p2)"	
         backgroundColor="transparent"
         boxPosition="center"
         boxOpacity={0.9}
-        scrollToMe={sectionToScrollTo === "viz-deaths"}
+        scrollToMe={sectionToScrollTo === "viz-three-criteria-p2"}
     />
     
-    <!-- Detail visualization 3: Small crashes (1 person) -->
-    <VisualizationSection
-        id="viz-small"
-        heading="Here are crashes involving only 1 person"
-        backgroundColor="transparent"
-        boxPosition="center"
-        boxOpacity={0.9}
-        scrollToMe={sectionToScrollTo === "viz-small"}
-    />
-    
-    <!-- Detail visualization 4: Medium crashes (2-5 people) -->
-    <VisualizationSection
-        id="viz-medium"
-        heading="Here with 2-5 casualties"
-        backgroundColor="transparent"
-        boxPosition="center"
-        boxOpacity={0.9}
-        scrollToMe={sectionToScrollTo === "viz-medium"}
-    />
-    
-    <!-- Detail visualization 5: Large crashes (5+ people) -->
-    <VisualizationSection
-        id="viz-large"
-        heading="And here with 5+ casualties"
-        backgroundColor="transparent"
-        boxPosition="center"
-        boxOpacity={0.9}
-        scrollToMe={sectionToScrollTo === "viz-large"}
-    />
+
     
 
     

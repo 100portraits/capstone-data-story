@@ -21,6 +21,7 @@
     // New highlighting props
     export let highlightFatalities: boolean | null = null;
     export let highlightNumberRange: {min: number, max: number} | null = null;
+    export let allCriteriaTrue: boolean | null = null;
     export let activeSectionId: string = "";
     export let interactive: boolean = false;
     
@@ -567,14 +568,11 @@
     $: if (activeSectionId && svg && container) {
         console.log(`Active section changed to: ${activeSectionId}`);
         // Reset filters based on which section is active
-        if (activeSectionId === "viz-injuries") {
-            // Highlight only injuries
+        if (activeSectionId === "viz-three-criteria") {
+            // Highlight only ones with all three criteria
             updateHighlighting();
-        } else if (activeSectionId === "viz-deaths") {
-            // Highlight only deaths
-            updateHighlighting();
-        } else if (activeSectionId === "viz-small" || activeSectionId === "viz-medium" || activeSectionId === "viz-large") {
-            // Highlight by number
+        } else if (activeSectionId === "viz-three-criteria-p2") {
+            // Highlight only ones with all three criteria
             updateHighlighting();
         } else {
             // Reset all highlights for other sections
@@ -623,6 +621,15 @@
                     );
                 }
                 
+                // Filter by all criteria being true if specified
+                if (allCriteriaTrue === true) {
+                    matches = matches && (
+                        d.data.criteria.criteria1 === true && 
+                        d.data.criteria.criteria2 === true && 
+                        d.data.criteria.criteria3 === true
+                    );
+                }
+                
                 // Highlighted dots are colored based on type:
                 // - Deaths (fatalities) = red
                 // - Other highlights = dark gray
@@ -651,6 +658,15 @@
                     matches = matches && (
                         d.data.numberInvolved >= highlightNumberRange.min && 
                         d.data.numberInvolved <= highlightNumberRange.max
+                    );
+                }
+                
+                // Filter by all criteria being true if specified
+                if (allCriteriaTrue === true) {
+                    matches = matches && (
+                        d.data.criteria.criteria1 === true && 
+                        d.data.criteria.criteria2 === true && 
+                        d.data.criteria.criteria3 === true
                     );
                 }
                 
@@ -686,6 +702,15 @@
                     );
                 }
                 
+                // Filter by all criteria being true if specified
+                if (allCriteriaTrue === true) {
+                    matches = matches && (
+                        d.data.criteria.criteria1 === true && 
+                        d.data.criteria.criteria2 === true && 
+                        d.data.criteria.criteria3 === true
+                    );
+                }
+                
                 return d.data === selectedDot ? 1.5 : (matches ? 1.0 : 0.5);
             })
             .attr('opacity', (d: PackedDot) => {
@@ -702,6 +727,15 @@
                     matches = matches && (
                         d.data.numberInvolved >= highlightNumberRange.min && 
                         d.data.numberInvolved <= highlightNumberRange.max
+                    );
+                }
+                
+                // Filter by all criteria being true if specified
+                if (allCriteriaTrue === true) {
+                    matches = matches && (
+                        d.data.criteria.criteria1 === true && 
+                        d.data.criteria.criteria2 === true && 
+                        d.data.criteria.criteria3 === true
                     );
                 }
                 
