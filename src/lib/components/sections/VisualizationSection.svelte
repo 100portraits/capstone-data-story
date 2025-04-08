@@ -57,13 +57,14 @@
     <div class="content-box {boxPosition}"
          style="background-color: rgba(255, 255, 255, {boxOpacity})">
         {#if heading}
-            <h2 class="text-2xl font-bold mb-4">{heading}</h2>
+            <h2 class="text-2xl mb-4">{@html heading}</h2>
         {/if}
         
         {#if text}
             <p class="text-lg mb-4">{text}</p>
         {/if}
         
+        <!-- Slot for custom component content -->
         <slot></slot>
         
         {#if subtext}
@@ -83,7 +84,7 @@
     }
     
     .content-box {
-        max-width: 500px;
+        max-width: 700px;
         padding: 1.5rem;
         border-radius: 8px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -99,5 +100,31 @@
     .right {
         margin-left: auto;
         margin-right: 2rem;
+    }
+    
+    /* Criteria list styling */
+    :global(.criteria-list) {
+        margin-top: 1.5rem;
+        padding-left: 0;
+        list-style-type: none;
+    }
+    
+    :global(.criteria-item) {
+        margin-bottom: 1.25rem;
+        font-size: 1.1rem;
+        line-height: 1.5;
+
+    }
+    
+    :global(.criteria-number) {
+        display: inline-block;
+        font-weight: bold;
+
+        font-size: 1.2rem;
+        min-width: 1.5rem;
+    }
+    
+    :global(.criteria-title) {
+        font-weight: bold;
     }
 </style> 

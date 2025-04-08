@@ -73,14 +73,14 @@
                                 allCriteriaTrue: true,
                                 onePoint: null
                             });
-                        } else if (sectionId === "viz-one-point") {
+                        } else if (sectionId === "viz-example-headline") {
                             highlightDots({ 
                                 fatalities: null,
                                 numberRange: null,
                                 allCriteriaTrue: null,
                                 onePoint: true
                             });
-                        } else if (sectionId === "viz-one-point-p2") {
+                        } else if (sectionId === "viz-rewritten-example-headline") {
                             highlightDots({ 
                                 fatalities: null,
                                 numberRange: null,

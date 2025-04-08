@@ -2,8 +2,8 @@
     export let sections: { id: string; label: string }[] = [];
     export let activeSection: string = "";
     export let showLabels: boolean = false;
-    export let orientation: "vertical" | "horizontal" = "vertical";
-    export let position: "left" | "right" | "top" | "bottom" = "right";
+    export let orientation: "vertical" | "horizontal" = "horizontal";
+    export let position: "left" | "right" | "top" | "bottom" = "top";
     export let onSectionClick: ((sectionId: string) => void) | undefined = undefined;
     export let className: string = "";
     
@@ -26,14 +26,14 @@
 <div class="story-progress {position} {orientation} {className}">
     <nav class="progress-nav">
         <ul>
-            {#each sections as section}
+            {#each sections as section, i}
                 <li class="progress-item {activeSection === section.id ? 'active' : ''}">
                     <button 
                         class="progress-button"
                         on:click={() => handleSectionClick(section.id)}
                         aria-label="Go to {section.label} section"
                     >
-                        <div class="progress-dot"></div>
+                        <div class="progress-bar {i === 0 ? 'first' : ''} {i === sections.length - 1 ? 'last' : ''}"></div>
                         {#if showLabels}
                             <span class="progress-label">{section.label}</span>
                         {/if}
@@ -51,10 +51,8 @@
     }
     
     .progress-nav {
-        background-color: rgba(255, 255, 255, 0.7);
         border-radius: 20px;
         padding: 12px 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
     
     .right {
@@ -74,7 +72,6 @@
         left: 50%;
         transform: translateX(-50%);
         width: 90%;
-        max-width: 500px;
     }
     
     .bottom {
@@ -92,19 +89,20 @@
     .horizontal ul {
         display: flex;
         flex-direction: row;
-        justify-content: center;
-        gap: 1rem;
+        justify-content: space-between;
+        gap: 0.25rem;
         width: 100%;
     }
     
     .horizontal .progress-nav {
         width: 100%;
-        padding: 8px 4px;
+        padding: 8px 12px;
     }
     
     .progress-item {
         margin: 0;
         padding: 0;
+        flex-grow: 1;
     }
     
     .progress-button {
@@ -112,7 +110,7 @@
         align-items: center;
         background: none;
         border: none;
-        padding: 4px;
+        padding: 2px;
         cursor: pointer;
         width: 100%;
         transition: all 0.2s ease;
@@ -122,17 +120,25 @@
         flex-direction: column;
     }
     
-    .progress-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
+    .progress-bar {
+        width: 100%;
+        height: 8px;
         background-color: #b0b0b0;
         transition: all 0.2s ease;
     }
+
+    .progress-bar.first {
+        border-top-left-radius: 4px;
+        border-bottom-left-radius: 4px;
+    }
+
+    .progress-bar.last {
+        border-top-right-radius: 4px;
+        border-bottom-right-radius: 4px;
+    }
     
-    .progress-item.active .progress-dot {
-        background-color: #000000;
-        transform: scale(1.2);
+    .progress-item.active .progress-bar {
+        background-color: hsl(0, 100%, 70%);
     }
     
     .progress-label {
@@ -155,13 +161,7 @@
     }
     
     .horizontal.top .progress-nav {
-        border-radius: 16px;
         background-color: rgba(255, 255, 255, 0.85);
-    }
-    
-    .horizontal.top .progress-dot {
-        width: 10px;
-        height: 10px;
     }
     
     @media (max-width: 640px) {
@@ -170,11 +170,11 @@
         }
         
         .horizontal ul {
-            gap: 0.5rem;
+            gap: 0.25rem;
         }
         
         .horizontal .progress-nav {
-            padding: 6px 3px;
+            padding: 6px 8px;
         }
     }
 </style> 

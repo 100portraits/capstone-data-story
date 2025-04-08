@@ -575,10 +575,10 @@
         } else if (activeSectionId === "viz-three-criteria-p2") {
             // Highlight only ones with all three criteria
             updateHighlighting();
-        } else if (activeSectionId === "viz-one-point") {
+        } else if (activeSectionId === "viz-example-headline") {
             // Highlight only one point
             updateHighlighting();
-        } else if (activeSectionId === "viz-one-point-p2") {
+        } else if (activeSectionId === "viz-rewritten-example-headline") {
             // Highlight only one point
             updateHighlighting();
         } else {
@@ -648,14 +648,11 @@
             .transition()
             .duration(750)
             .attr('fill', (d: PackedDot) => {
-                // Highlighted dots are colored based on type:
-                // - Deaths (fatalities) = red
-                // - Other highlights = dark gray
-                // - Non-highlighted = very light
+
                 if (dotMatches(d)) {
-                    return highlightFatalities === true ? '#D32F2F' : '#555555';
+                    return highlightFatalities === true ? '#D32F2F' : '#E25252';
                 } else {
-                    return '#F2F2F2';
+                    return 'lightgrey';
                 }
             })
             .attr('stroke', (d: PackedDot) => {
@@ -666,14 +663,11 @@
                 }
                 
                 // Otherwise, use highlighting-based stroke colors
-                // Selected dot = black
-                // Deaths = darker red
-                // Other highlights = dark gray
-                // Non-highlighted = very light
+
                 if (d.data === selectedDot) {
                     return '#000000';
                 } else if (dotMatches(d)) {
-                    return highlightFatalities === true ? '#B71C1C' : '#333333';
+                    return highlightFatalities === true ? '#B71C1C' : '#E25252';
                 } else {
                     return '#EBEBEB';
                 }

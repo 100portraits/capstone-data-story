@@ -3,9 +3,10 @@
     import ScrollytellingContainer from '$lib/components/ScrollytellingContainer.svelte';
     import ScrollSection from '$lib/components/sections/StorySection.svelte';
     import QuoteBlock from '$lib/components/ui/QuoteBlock.svelte';
-    import HeadlineComparison from '$lib/components/ui/HeadlineComparison.svelte';
+    import Headline from '$lib/components/ui/Headline.svelte';
     import VisualizationSection from '$lib/components/sections/VisualizationSection.svelte';
     import StoryProgress from '$lib/components/ui/ProgressDots.svelte';
+    import InteractiveHeadline from '$lib/components/ui/InteractiveHeadline.svelte';
     
     let scrollContainer: ScrollytellingContainer;
     let activeSection = "intro";
@@ -18,12 +19,27 @@
         { id: "headline-speeder", label: "Headline 2" },
         { id: "headline-comparison", label: "Comparison" },
         { id: "analysis", label: "Analysis" },
-        { id: "viz-three-criteria", label: "Three Criteria" },
-        { id: "viz-three-criteria-p2", label: "Three Criteria (p2)" },
-        { id: "viz-one-point", label: "One Point" },
-        { id: "viz-one-point-p2", label: "One Point (p2)" },
-
+        { id: "viz-three-criteria", label: "Criteria 1" },
+        { id: "viz-three-criteria-p2", label: "Criteria 2" },
+        { id: "viz-example-headline", label: "Example Headline" },
+        { id: "viz-rewritten-example-headline", label: "Rewritten Example Headline" },
         { id: "explore", label: "Explore" }
+    ];
+    
+    // Define the terms with explanations for the interactive headline
+    const highlightedTerms = [
+        {
+            term: "dies",
+            explanation: "Dies underplays the brutality and preventability of crashes and muddles responsibility."
+        },
+        {
+            term: "being",
+            explanation: "After being struck - passive voice sentences can imply blame on the victim's end."
+        },
+        {
+            term: "car",
+            explanation: "Perpetrator is dehumanised, referred to as 'car', as if crashes were some natural occurrence. There was a human in that car!"
+        }
     ];
     
     // Update active section based on scroll
@@ -59,18 +75,18 @@
 </script>
 
 <ScrollytellingContainer bind:this={scrollContainer}>
-    <!-- Story progress navigation -->
+    <!-- Story progress navigation - desktop version -->
     <StoryProgress 
         {sections} 
         {activeSection} 
         showLabels={false}
-        position="right"
-        orientation="vertical"
+        position="top"
+        orientation="horizontal"
         className="hidden sm:block" 
         onSectionClick={handleSectionNav}
     />
     
-    <!-- Mobile version: horizontal dots at top -->
+    <!-- Mobile version - same position and style -->
     <StoryProgress 
         {sections} 
         {activeSection} 
@@ -110,15 +126,11 @@
             <h2 class="text-3xl font-bold mb-6">Do traffic crash headlines tell the whole story?</h2>
         </div>
         
-        <div class="headline-showcase">
-            <div class="headline-card-3d">
-                <div class="headline-card-shadow"></div>
-                <div class="headline-card w-full md:w-96">
-                    <p class="headline-red text-xl font-bold mb-3">"Woman and 2 children killed after car crashes into them at Brooklyn crosswalk"</p>
-                    <p class="text-sm">Source: abcnews.go.com</p>
-                </div>
-            </div>
-        </div>
+        <Headline 
+            headline="Woman and 2 children killed after car crashes into them at Brooklyn crosswalk"
+            source="abcnews.go.com"
+        />
+        
         <div class="mt-12">
             <p class="text-xl mb-6">Let's look at another headline for the same collision...</p>
         </div>
@@ -131,13 +143,10 @@
         fullHeight={true}
         scrollToMe={sectionToScrollTo === "headline-speeder"}
     >
-        <div class="headline-card-3d">
-            <div class="headline-card-shadow"></div>
-            <div class="headline-card w-full md:w-96 mb-8">
-                <p class="headline-red text-xl font-bold mb-3">"Slaughter of the Innocents: Recidivist Speeder Kills Three"</p>
-                <p class="text-sm">Source: nyc.streetsblog.org</p>
-            </div>
-        </div>
+        <Headline 
+            headline="Slaughter of the Innocents: Recidivist Speeder Kills Three"
+            source="nyc.streetsblog.org"
+        />
         
         <div class="text-xl max-w-md mx-auto mt-12">
             <p>A driver with 90 speed limit violations and a suspended license killed 3 pedestrians.</p>
@@ -151,13 +160,23 @@
         fullHeight={true}
         scrollToMe={sectionToScrollTo === "headline-comparison"}
     >
-        <HeadlineComparison
-            headline1="Woman and 2 children killed after car crashes into them at Brooklyn crosswalk"
-            source1="abcnews.go.com"
-            headline2="Slaughter of the Innocents: Recidivist Speeder Kills Three"
-            source2="nyc.streetsblog.org"
-            description="These two headlines are for the same crash."
-        />
+        <p class="text-center text-xl italic mb-6">These two headlines are for the same crash.</p>
+        
+        <div class="flex flex-col md:flex-row gap-8 items-start justify-center">
+            <div class="md:flex-1 flex justify-center">
+                <Headline 
+                    headline="Woman and 2 children killed after car crashes into them at Brooklyn crosswalk"
+                    source="abcnews.go.com"
+                />
+            </div>
+            
+            <div class="md:flex-1 flex justify-center">
+                <Headline 
+                    headline="Slaughter of the Innocents: Recidivist Speeder Kills Three"
+                    source="nyc.streetsblog.org"
+                />
+            </div>
+        </div>
         
         <div class="mt-12">
             <h3 class="text-2xl font-bold mb-4">Which of these two headlines is "better"? Which is more humane? Which shows the real problem behind traffic crashes?</h3>
@@ -166,58 +185,82 @@
     </ScrollSection>
 
     <!-- Analysis section -->
-    <ScrollSection 
+    <VisualizationSection 
         id="analysis" 
-        background="white" 
-        fullHeight={true}
+        heading="We analyzed and plotted 10,000 collisions to investigate how crashes are reported"
+        backgroundColor="transparent"
+        boxPosition="center"
         scrollToMe={sectionToScrollTo === "analysis"}
     >
-        <div class="text-center max-w-3xl mx-auto">
-            <h2 class="text-3xl font-bold mb-6">We analyzed and plotted 10,000 collisions to investigate how crashes are reported</h2>
-        </div>
-    </ScrollSection>
+        
+    </VisualizationSection>
     
     <!-- Detail visualization 1: three criteria -->
     <VisualizationSection
         id="viz-three-criteria"
-        heading="Here are traffic crashes reported with all three good journalism criteria"
+        heading="Our analysis found that <strong>only 5% of traffic crash reports</strong> use humanized language that acknowledges the people involved."
         backgroundColor="transparent"
         boxPosition="center"
-        boxOpacity={0.9}
         scrollToMe={sectionToScrollTo === "viz-three-criteria"}
     />
     
-    <!-- Detail visualization 2: three criteria (p2)-->
+    <!-- Detail visualization 2: Three criteria explanation -->
     <VisualizationSection
         id="viz-three-criteria-p2"
-        heading="Here are crashes reported with all three good journalism criteria (p2)"	
+        heading="We evaluated reports against three key criteria:
+        <ol class='criteria-list'>
+            <li class='criteria-item'><span class='criteria-number'>1.</span><span class='criteria-title'>Mentions all parties:</span><br>Does the headline mention all parties involved in the crash?</li>
+            <li class='criteria-item'><span class='criteria-number'>2.</span><span class='criteria-title'>Uses human terms:</span><br>Are the parties referred to as humans, not objects or transportation modes?</li>
+            <li class='criteria-item'><span class='criteria-number'>3.</span><span class='criteria-title'>Active Voice:</span><br>Does the headline describe the crash using active voice?</li>
+        </ol>"
         backgroundColor="transparent"
         boxPosition="center"
-        boxOpacity={0.9}
         scrollToMe={sectionToScrollTo === "viz-three-criteria-p2"}
     />
     
-    <!-- Detail visualization 3: zooming in on one point)-->
+    <!-- Example headline with interactive elements -->
     <VisualizationSection
-        id="viz-one-point"
-        heading="Zooming in on one point"	
+        id="viz-example-headline"
+        heading="Consider this headline for example:"
+        text="The words highlighted in red are examples of dehumanising wording in article headlines. Click on them and explore why they are problematic."
         backgroundColor="transparent"
         boxPosition="center"
-        boxOpacity={0.9}
-        scrollToMe={sectionToScrollTo === "viz-one-point"}
-    />
+        scrollToMe={sectionToScrollTo === "viz-example-headline"}
+    >
+        <InteractiveHeadline 
+            headline="Pedestrian dies after being struck by a car in Peterhead" 
+            source="bbc.com"
+            highlightedTerms={[
+                {
+                    term: "dies",
+                    explanation: "Dies underplays the brutality and preventability of crashes and muddles responsibility."
+                },
+                {
+                    term: "being",
+                    explanation: "After being struck - passive voice sentences can imply blame on the victim's end."
+                },
+                {
+                    term: "car",
+                    explanation: "Perpetrator is dehumanised, referred to as 'car', as if crashes were some natural occurrence. There was a human in that car!"
+                }
+            ]}
+        />
+    </VisualizationSection>
 
-    <!-- Detail visualization 4: zooming in on one point (p2)-->
+    <!-- Rewritten example headline -->
     <VisualizationSection
-        id="viz-one-point-p2"
-        heading="Zooming in on one point (p2)"	
+        id="viz-rewritten-example-headline"
+        heading="Let's try to make the headline more humane, using the contents of the articles."
         backgroundColor="transparent"
         boxPosition="center"
-        boxOpacity={0.9}
-        scrollToMe={sectionToScrollTo === "viz-one-point-p2"}
-    />
+        scrollToMe={sectionToScrollTo === "viz-rewritten-example-headline"}
+    >
+        <Headline 
+            headline="Driver kills man, 61, in Peterhead" 
+            source="Rewritten from bbc.com"
+        />
+    </VisualizationSection>
     
-
     
     <!-- Exploration mode section -->
     <ScrollSection 
