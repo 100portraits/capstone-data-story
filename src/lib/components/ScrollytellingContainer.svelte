@@ -3,6 +3,7 @@
     import PackedCircleChart from './PackedCircleChart.svelte';
     import type { Dot } from '$lib/types/data';
     import { loadData, DataSource } from '$lib/utils/dataLoader';
+    import { devMode } from '$lib/stores/devMode';
     
     export let showViz: boolean = true;
     export let initViz: boolean = true;
@@ -190,6 +191,18 @@
         </div>
     {/if}
     
+    <!-- DEV mode skip button -->
+    {#if $devMode && !explorationMode}
+    <div class="dev-mode-controls">
+        <button 
+            class="dev-mode-btn"
+            on:click={enterExplorationMode}
+        >
+            Skip to explore (dev mode)
+        </button>
+    </div>
+    {/if}
+    
     <div class="sections-container" class:hidden={explorationMode}>
         <slot></slot>
     </div>
@@ -298,5 +311,28 @@
     
     .down-arrow-btn:active {
         transform: translateX(-50%) translateY(0);
+    }
+    
+    .dev-mode-controls {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 30;
+    }
+    
+    .dev-mode-btn {
+        background-color: #ff3e00;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        transition: background-color 0.2s;
+    }
+    
+    .dev-mode-btn:hover {
+        background-color: #ff5722;
     }
 </style> 
