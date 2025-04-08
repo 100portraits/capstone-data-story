@@ -19,8 +19,8 @@
 <style>
     .dev-mode-toggle {
         position: fixed;
-        top: 1rem;
-        left: 1rem;
+        top: 0.5rem;
+        left: 0.5rem;
         z-index: 30;
     }
     
@@ -28,14 +28,14 @@
         background-color: #333;
         color: white;
         border: none;
-        padding: 0.4rem 0.8rem;
-        border-radius: 4px;
-        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 3px;
+        font-size: 0.7rem;
         font-weight: bold;
         cursor: pointer;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        transition: background-color 0.2s;
-        opacity: 0.7;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        transition: all 0.2s;
+        opacity: 0.5;
     }
     
     .toggle-btn:hover {

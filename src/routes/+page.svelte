@@ -2,7 +2,6 @@
     import { onMount } from 'svelte';
     import ScrollytellingContainer from '$lib/components/ScrollytellingContainer.svelte';
     import ScrollSection from '$lib/components/sections/StorySection.svelte';
-    import QuoteBlock from '$lib/components/ui/QuoteBlock.svelte';
     import Headline from '$lib/components/ui/Headline.svelte';
     import VisualizationSection from '$lib/components/sections/VisualizationSection.svelte';
     import StoryProgress from '$lib/components/ui/ProgressDots.svelte';
@@ -104,10 +103,11 @@
         fullHeight={true}
         scrollToMe={sectionToScrollTo === "intro"}
     >
-        <QuoteBlock 
-            text="Accident happens somewhere, nobody cares" 
-            size="large"
-        />
+        <div class="quote-block text-center">
+            <p class="text-4xl">
+                "Accident happens somewhere, nobody cares"
+            </p>
+        </div>
         
         <div class="mt-16">
             <h2 class="text-4xl font-bold mb-6">Why we should talk more about traffic crash journalism.</h2>
@@ -178,16 +178,16 @@
             </div>
         </div>
         
-        <div class="mt-12">
+        <div class="">
             <h3 class="text-2xl font-bold mb-4">Which of these two headlines is "better"? Which is more humane? Which shows the real problem behind traffic crashes?</h3>
-            <p class="text-xl mt-6">We believe reporting doesn't reflect the reality of crashes. We analysed 3000 collision articles to investigate how they are reported on.</p>
+            <p class="text-xl mt-6">We believe reporting doesn't reflect the reality of crashes. We analysed <strike>1000</strike> 500 collision articles to investigate how they are reported on.</p>
         </div>
     </ScrollSection>
 
     <!-- Analysis section -->
     <VisualizationSection 
         id="analysis" 
-        heading="We analyzed and plotted 10,000 collisions to investigate how crashes are reported"
+        heading="We analyzed and plotted <strike>10,000</strike> 500 collisions to investigate how crashes are reported"
         backgroundColor="transparent"
         boxPosition="center"
         scrollToMe={sectionToScrollTo === "analysis"}

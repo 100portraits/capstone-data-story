@@ -2,6 +2,7 @@
     import { onMount } from 'svelte';
     import * as d3 from 'd3';
     import type { Dot } from '$lib/types/data';
+    import { zoomIdentity } from 'd3';
     
     interface PackedDot extends Dot {
         value: number;
@@ -40,9 +41,13 @@
     let centerOffsetX = 0;
     let centerOffsetY = 0;
     let isMobile = false;
+    let currentTransform = zoomIdentity; // Store the current zoom transform
+    let zoomDebounceTimer: number | null = null; // Timer for debouncing zoom transitions
 
-    
-    
+    // Define zoom levels for different states
+    const storyZoomLevel = 1; // More zoomed out for general story sections
+    const focusedZoomLevel = 3.0; // More zoomed in for example headlines
+
     // Check if the device is mobile
     $: isMobile = width <= 768;
     
@@ -90,10 +95,11 @@
         const svgSelection = d3.select(svg);
         
         if (interactive) {
-            // Enable all interactive features
-            // Re-enable zoom
+            // No need to explicitly re-add listeners - filter handles it.
+            // Just ensure zoom behavior is present if somehow removed.
             if (zoom) {
-                svgSelection.call(zoom as any);
+                svgSelection.call(zoom as any); // Ensures zoom behavior is attached
+                console.log("Interactive mode enabled, zoom filter allows events.");
             }
             
             // Make dots clickable and update their appearance for exploration mode
@@ -114,11 +120,21 @@
             // Reset to a centered, zoomed-out view
             resetView();
         } else {
-            // Disable interactions in story mode
-            // Remove zoom behavior
-            if (zoom) {
-                svgSelection.on('.zoom', null);
-            }
+            // Zoom behavior stays attached, filter prevents user events.
+             console.log("Interactive mode disabled, zoom filter prevents events.");
+            
+            // Optionally reset zoom to story level when exiting interactive mode
+            const storyTransform = zoomIdentity
+                .translate(width / 2, height / 2)
+                .scale(storyZoomLevel);
+            
+            svgSelection
+                .transition()
+                .duration(500)
+                .call(zoom.transform as any, storyTransform)
+                 .on('end', () => {
+                    currentTransform = storyTransform; 
+                });
             
             // Make dots non-clickable in story mode
             d3.select(container).selectAll('circle')
@@ -133,6 +149,10 @@
             
             // Clear any selected dot
             selectedDot = null;
+        }
+        // We need to explicitly update the zoom behavior's filter when the mode changes
+        if (zoom) {
+             zoom.filter(zoomFilter); 
         }
     }
     
@@ -297,6 +317,20 @@
             hoverTimeout = null;
         }
         hoveredDot = null;
+    }
+
+    function zoomFilter(event: WheelEvent | MouseEvent | TouchEvent): boolean {
+        // Allow zoom only when in interactive mode
+        if (!interactive) {
+            return false; 
+        }
+        // Default D3 zoom filter logic (allow wheel, disallow right-click drag)
+        if (event.type === 'wheel') return true;
+        if (event.type === 'mousedown' || event.type === 'touchstart') {
+             // Check for standard zoom/pan gestures (e.g., left mouse, single touch)
+            return !(event instanceof MouseEvent && event.button === 2); // Disable right-click drag
+        }
+        return false;
     }
 
     onMount(() => {
@@ -487,31 +521,39 @@
                 }
             }
 
-            // Initialize zoom behavior - always create a new one to avoid issues with references
+            // Initialize zoom behavior
             try {
-                // First remove any existing zoom behaviors
-                svgSelection.on('.zoom', null);
-                
+                svgSelection.on('.zoom', null); // Clear previous just in case
                 zoom = d3.zoom()
                     .scaleExtent([0.1, 8])
+                    .filter(zoomFilter) // Use our custom filter function
                     .on('zoom', (event: any) => {
-                        containerSelection.attr('transform', event.transform);
+                        // Only apply transform if interactive OR if it's the initial programmatic transform
+                        // The reactive transition will handle updates in story mode
+                        if (interactive || event.sourceEvent === null) { // event.sourceEvent is null for programmatic .call(zoom.transform)
+                             containerSelection.attr('transform', event.transform);
+                        }
+                        // Always update state
+                        currentTransform = event.transform; 
                         updateVisibleCounts();
                     });
-                
-                // Only apply zoom in interactive mode
-                if (interactive) {
-                    svgSelection.call(zoom as any);
-                }
-                
+
                 // Set initial transform
-                const initialTransform = d3.zoomIdentity
+                let initialScale = interactive ? 0.6 : storyZoomLevel;
+                if (!interactive && (activeSectionId === 'viz-example-headline' || activeSectionId === 'viz-rewritten-example-headline')) {
+                    initialScale = focusedZoomLevel;
+                }
+                const initialTransform = zoomIdentity
                     .translate(width/2, height/2)
-                    .scale(interactive ? 0.6 : 1.5);
+                    .scale(initialScale);
+                currentTransform = initialTransform; 
                 
+                // Always call the zoom behavior to attach listeners
+                svgSelection.call(zoom as any);
+                // Apply the initial transform programmatically *after* attaching the behavior
                 svgSelection.call(zoom.transform as any, initialTransform);
                 
-                console.log("Zoom behavior initialized");
+                console.log("Zoom behavior initialized and attached");
             } catch (e) {
                 console.error("Error initializing zoom:", e);
             }
@@ -751,6 +793,53 @@
                 console.error("Failed to recover from zoomOutView error:", recoveryError);
             }
         }
+    }
+
+    // Reactive statement to handle zoom transitions based on active section
+    $: if (!interactive && activeSectionId && svg && zoom) {
+        // Clear any existing debounce timer
+        if (zoomDebounceTimer) {
+            clearTimeout(zoomDebounceTimer);
+        }
+
+        // Set a new timer to debounce the transition
+        zoomDebounceTimer = window.setTimeout(() => {
+            console.log(`Debounced transition trigger for section: ${activeSectionId}`);
+            let targetScale = storyZoomLevel; 
+            
+            // Determine target scale based on section ID
+            if (activeSectionId === 'viz-example-headline' || activeSectionId === 'viz-rewritten-example-headline') {
+                targetScale = focusedZoomLevel; 
+            }
+            
+            // Create the target transform (centered)
+            const targetTransform = zoomIdentity
+                .translate(width / 2, height / 2)
+                .scale(targetScale);
+            
+            // Only animate if the target transform is different from the current one
+            if (currentTransform.k !== targetTransform.k || currentTransform.x !== targetTransform.x || currentTransform.y !== targetTransform.y) {
+                 console.log(`Applying debounced transition to scale: ${targetScale}`);
+                 d3.select(svg)
+                    .interrupt() // Interrupt any ongoing transitions first
+                    .transition()
+                    .duration(1000) // 1 second duration
+                    .call(zoom.transform as any, targetTransform)
+                    .on('end', () => {
+                        // Update the stored transform after the transition completes
+                        // Check if still relevant (activeSectionId might have changed again)
+                        if (activeSectionId === 'viz-example-headline' || activeSectionId === 'viz-rewritten-example-headline') {
+                            if(targetScale !== focusedZoomLevel) return; // Abort if scale target changed
+                        } else {
+                            if(targetScale !== storyZoomLevel) return; // Abort if scale target changed
+                        }
+                        currentTransform = targetTransform; 
+                        console.log('Debounced zoom transition ended. New transform:', currentTransform);
+                    });
+            } else {
+                 console.log('Debounced transition skipped: Transform already at target.');
+            }
+        }, 150); // Debounce time (e.g., 150ms)
     }
 </script>
 
