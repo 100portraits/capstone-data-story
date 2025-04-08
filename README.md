@@ -70,10 +70,6 @@ src/
 - Applies filters based on which section is visible
 - Handles exploration mode toggle
 
-**CSS Features**:
-- Responsive layouts for sections and controls
-- Transitions for smooth visual changes
-- Z-index management for proper layering
 
 ### PackedCircleChart
 
@@ -109,25 +105,9 @@ src/
 - `toggleView()`: Toggles between original and humanized views
 - `updateVisibleCounts()`: Calculates casualties visible in viewport
 
-**D3.js Integration**:
-- Uses D3 `pack` layout for circle packing
-- Implements D3 `zoom` behavior for pan/zoom
-- Implements D3 selections for manipulating SVG elements
-- Uses D3 transitions for animations
-
-**Responsive Features**:
-- Handles window resizes with debounced updates
-- Different layouts and styles for mobile vs desktop
-- Disables hover effects on mobile
-
-**Error Handling**:
-- Try/catch blocks throughout to gracefully handle D3 errors
-- Recovery mechanisms if transforms or renders fail
-- Detailed logging for debugging
-
 ### StoryProgress
 
-**Purpose**: Navigation component showing progress through the story sections.
+**Purpose**: Progress indicator at the top(mobile) or right of screen
 
 **Key Props**:
 - `sections`: Array of section objects with id and label
@@ -141,11 +121,6 @@ src/
 **Key Functions**:
 - `handleSectionClick()`: Processes clicks on navigation items
 
-**CSS Features**:
-- Responsive styles for different screen sizes
-- Different styles for vertical vs horizontal orientation
-- Active state styling for current section
-- Semi-transparent background for better readability
 
 ### ScrollSection
 
@@ -157,10 +132,6 @@ src/
 - `fullHeight`: Boolean for full viewport height
 - `scrollToMe`: Boolean to trigger scrolling to this section
 
-**CSS Features**:
-- Flexible height settings (full height or content-based)
-- Consistent padding and margins
-- Section transition effects
 
 ### VisualizationSection
 
@@ -174,10 +145,7 @@ src/
 - `boxOpacity`: Opacity of the text overlay box
 - `scrollToMe`: Boolean to trigger scrolling to this section
 
-**CSS Features**:
-- Positioning options for text overlay
-- Opacity controls for better readability
-- Responsive layout adjustments
+
 
 ### HeadlineComparison
 
@@ -190,10 +158,6 @@ src/
 - `source2`: Source of second headline
 - `description`: Descriptive text about the comparison
 
-**CSS Features**:
-- 3D card effect with shadows and transforms
-- Responsive layout (stacked on mobile, side-by-side on desktop)
-- Hover effects for interactive feel
 
 ### QuoteBlock
 
@@ -205,16 +169,11 @@ src/
 - `centered`: Boolean for text alignment
 - `size`: "small", "medium", or "large" size option
 
-**CSS Features**:
-- Different text sizes based on `size` prop
-- Optional text alignment (centered or left-aligned)
-- Source attribution styling
-
 ## Data Model
 
 ### Dot Interface
 
-Located in `src/lib/data.ts`, this interface defines the structure of each crash data point:
+`src/lib/data.ts` -> interface that defines the structure of each crash data point:
 
 ```typescript
 export interface Dot {
@@ -237,12 +196,10 @@ export interface Dot {
 
 **Data Generation**:
 - `generateDots(count: number)`: Function that generates random crash data
-- Uses exponential distribution for realistic casualty numbers
-- Generates random criteria values to simulate different crash attributes
 
 ## Main Page
 
-The main page (`src/routes/+page.svelte`) orchestrates the entire application by:
+The main page (`src/routes/+page.svelte`) organizes the application by:
 
 1. Defining the sections array with IDs and labels
 2. Handling section navigation
@@ -254,8 +211,3 @@ The main page (`src/routes/+page.svelte`) orchestrates the entire application by
 - Uses IntersectionObserver to detect visible sections
 - Updates active section for navigation highlighting
 - Provides click handling for navigation items
-
-**Responsive Design**:
-- Different navigation styles for mobile vs desktop
-- Adaptive layouts for different screen sizes
-- 3D effects for headline cards
