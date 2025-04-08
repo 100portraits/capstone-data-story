@@ -73,7 +73,7 @@
     }
 </script>
 
-<ScrollytellingContainer bind:this={scrollContainer}>
+<ScrollytellingContainer bind:this={scrollContainer} {sections}>
     <!-- Story progress navigation - desktop version -->
     <StoryProgress 
         {sections} 

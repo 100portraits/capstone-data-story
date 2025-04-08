@@ -8,13 +8,13 @@
     export let showViz: boolean = true;
     export let initViz: boolean = true;
     export let dataCount: number = 500;
+    export let sections: { id: string; label: string }[] = [];
     
     let dots: Dot[] = [];
     let windowWidth: number;
     let windowHeight: number;
     let visibleSectionIndex = 0;
     let currentSectionId: string = '';
-    let sections: HTMLElement[] = [];
     
     // Visualization state that will be passed to PackedCircleChart
     let highlightFatalities: boolean | null = null;
@@ -24,6 +24,11 @@
     let activeSectionId: string = '';
     let explorationMode: boolean = false;
     
+    // Calculate the ID of the last section
+    $: lastSectionId = sections.length > 0 ? sections[sections.length - 1].id : '';
+    // Determine if the current section is the last section
+    $: isLastSection = currentSectionId === lastSectionId;
+
     onMount(() => {
         if (initViz) {
             let source = DataSource.CSV;
@@ -39,8 +44,8 @@
             });
         }
         
-        // Collect all sections for navigation
-        sections = Array.from(document.querySelectorAll('.section'));
+        // Collect section elements using the passed IDs
+        const sectionElements = sections.map(s => document.getElementById(s.id)).filter(el => el !== null) as HTMLElement[];
         
         // Handle section visibility detection
         const observer = new IntersectionObserver((entries) => {
@@ -93,9 +98,9 @@
             });
         }, { threshold: 0.5 });
         
-        // Observe all sections
-        document.querySelectorAll('.section').forEach(section => {
-            observer.observe(section);
+        // Observe all collected section elements
+        sectionElements.forEach(section => {
+            if (section) observer.observe(section);
         });
         
         return () => {
@@ -184,13 +189,13 @@
     function scrollToNextSection() {
         if (!currentSectionId || explorationMode) return;
         
-        // Find current section index
+        // Find current section index using the sections prop array
         const currentIndex = sections.findIndex(section => section.id === currentSectionId);
         
         // If found and not the last section, scroll to the next one
         if (currentIndex !== -1 && currentIndex < sections.length - 1) {
-            const nextSection = sections[currentIndex + 1];
-            scrollToSection(nextSection.id);
+            const nextSectionId = sections[currentIndex + 1].id;
+            scrollToSection(nextSectionId);
         }
     }
 </script>
@@ -242,8 +247,8 @@
     </div>
     {/if}
     
-    <!-- Down arrow navigation button -->
-    {#if !explorationMode}
+    <!-- Down arrow navigation button - hide if in explore mode OR if it's the last section -->
+    {#if !explorationMode && !isLastSection}
     <button 
         class="down-arrow-btn"
         on:click={scrollToNextSection}
