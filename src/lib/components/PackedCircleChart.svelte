@@ -638,11 +638,12 @@
         circles
             .transition()
             .duration(750)
-            .attr('fill', (d: PackedDot) => d.data.fatalities ? '#FFFFFF' : '#D9D9D9')
-            .attr('stroke', (d: PackedDot) => d.data === selectedDot ? '#000000' : '#9c9c9c')
-            .attr('stroke', (d: PackedDot) => d.data.fatalities ? "#9c9c9c": "D9D9D9")
+            .attr('fill', (d: PackedDot) => d.data.fatalities ? '#D9D9D9' : '#FFFFFF')
+            .attr('stroke', (d: PackedDot) => {
+                if (d.data === selectedDot) return '#000000';
+                return d.data.fatalities ? '#6e6e6e' : '#9c9c9c';
+            })
             .attr('stroke-width', (d: PackedDot) => d.data === selectedDot ? 1.5 : 0.5)
-            .attr('stroke-width', (d: PackedDot) => d.data.fatalities ? 1 : 0.5)
             .attr('opacity', 1.0);
     }
     
@@ -696,7 +697,8 @@
                 if (dotMatches(d)) {
                     return highlightFatalities === true ? '#D32F2F' : '#E25252';
                 } else {
-                    return '#9c9c9c';
+                    // Corrected: Use standard interactive colors if not highlighted
+                    return d.data.fatalities ? '#D9D9D9' : '#FFFFFF'; 
                 }
             })
             .attr('stroke', (d: PackedDot) => {
