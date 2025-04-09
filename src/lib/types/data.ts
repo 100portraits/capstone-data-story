@@ -2,6 +2,7 @@ export interface Dot {
     id: number;
     numberInvolved: number;
     fatalities: boolean;
+    allCriteriaTrue: boolean;
     headline: string;
     humanized_headline: string;
     source: string;

@@ -50,10 +50,15 @@ async function loadRawCsvData(filePath: string): Promise<any[]> {
         // loop through rows creating Dot objects
         const dots: Dot[] = [];
         for (let i = 0; i < rawCsvData.length; i++) {
+            //debug for allcriteria
+            if (rawCsvData[i].mentions_all_parties === '1.0' && rawCsvData[i].uses_human_terms === '1.0' && rawCsvData[i].active_voice === '1.0') {
+                console.log(rawCsvData[i]);
+            }   
             dots.push({
                 id: i,
                 numberInvolved: parseInt(rawCsvData[i].num_injured) + parseInt(rawCsvData[i].num_dead) + parseInt(rawCsvData[i].num_unknown) + parseInt(rawCsvData[i].num_unharmed),
                 fatalities: parseInt(rawCsvData[i].num_dead) > 0,
+                allCriteriaTrue: rawCsvData[i].mentions_all_parties === '1.0' && rawCsvData[i].uses_human_terms === '1.0' && rawCsvData[i].active_voice === '1.0',
                 headline: rawCsvData[i].title,
                 humanized_headline: rawCsvData[i].human_centered_headline,
                 source: rawCsvData[i].url,
@@ -106,6 +111,7 @@ function generateRandomDots(count: number): Dot[] {
             fatalities: Math.random() > 0.5, // Random boolean
             headline: `Crash number ${i} headline`, // Generated headline with ID
             humanized_headline: `Crash number ${i} humanized headline`,
+            allCriteriaTrue: Math.random() > 0.5,
             source: 'https://www.google.com',
             criteria: {
                 criteria1: Math.random() > 0.5,
