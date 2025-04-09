@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import Parallax from '../ui/Parallax.svelte';
 
     export let id: string;
     export let background: string = "white";

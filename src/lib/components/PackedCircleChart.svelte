@@ -495,7 +495,7 @@
                 .attr('r', (d: PackedDot) => d.r)
                 .attr('cx', (d: PackedDot) => d.x + centerOffsetX)
                 .attr('cy', (d: PackedDot) => d.y + centerOffsetY)
-                .attr('fill', (d: PackedDot) => d.data.fatalities ? '#FFFFFF' : '#D9D9D9')
+                .attr('fill', (d: PackedDot) => d.data.fatalities ? '#D9D9D9' : '#FFFFFF')
                 .attr('stroke', (d: PackedDot) => {
                     if (interactive) {
                         return d.data === selectedDot ? '#333333' : '#a8a8a8';
@@ -539,7 +539,7 @@
                     });
 
                 // Set initial transform
-                let initialScale = interactive ? 0.6 : storyZoomLevel;
+                let initialScale = interactive ? 1 : storyZoomLevel;
                 if (!interactive && (activeSectionId === 'viz-example-headline' || activeSectionId === 'viz-rewritten-example-headline')) {
                     initialScale = focusedZoomLevel;
                 }
@@ -639,8 +639,10 @@
             .transition()
             .duration(750)
             .attr('fill', (d: PackedDot) => d.data.fatalities ? '#FFFFFF' : '#D9D9D9')
-            .attr('stroke', (d: PackedDot) => d.data === selectedDot ? '#000000' : '#D9D9D9')
+            .attr('stroke', (d: PackedDot) => d.data === selectedDot ? '#000000' : '#9c9c9c')
+            .attr('stroke', (d: PackedDot) => d.data.fatalities ? "#9c9c9c": "D9D9D9")
             .attr('stroke-width', (d: PackedDot) => d.data === selectedDot ? 1.5 : 0.5)
+            .attr('stroke-width', (d: PackedDot) => d.data.fatalities ? 1 : 0.5)
             .attr('opacity', 1.0);
     }
     
@@ -694,7 +696,7 @@
                 if (dotMatches(d)) {
                     return highlightFatalities === true ? '#D32F2F' : '#E25252';
                 } else {
-                    return 'lightgrey';
+                    return '#9c9c9c';
                 }
             })
             .attr('stroke', (d: PackedDot) => {

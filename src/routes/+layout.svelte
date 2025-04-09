@@ -5,5 +5,4 @@
 	let { children } = $props();
 </script>
 
-<DevModeToggle />
 {@render children()}
